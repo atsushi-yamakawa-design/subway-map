@@ -46,7 +46,8 @@ export function createMap(container: HTMLElement, data: MapData, state: AppState
     fitBoundsOptions: { padding: 40 },
     attributionControl: { compact: true },
   });
-  map.addControl(new NavigationControl({ showCompass: false }), "top-right");
+  // ズーム + コンパス（クリックで北が上に戻る）
+  map.addControl(new NavigationControl({ showCompass: true, visualizePitch: true }), "top-right");
   map.addControl(new ScaleControl({ unit: "metric" }), "bottom-right");
 
   // ホバー中は太くする。["zoom"] はトップレベルの interpolate の入力にしか置けないので、
@@ -178,41 +179,33 @@ export function createMap(container: HTMLElement, data: MapData, state: AppState
   function applySelection(sel: Selection): void {
     if (!map.getLayer(L_LINE)) return;
     const hi = highlightedLines(sel);
-    const ops = [...sel.operators];
     const hasHi = hi.length > 0;
+    const all: FilterSpecification = ["literal", true];
 
     const lineIsHi: ExpressionSpecification = hasHi ? ["in", ["get", "id"], ["literal", hi]] : ["literal", true];
-    const lineOpFilter: ExpressionSpecification = ops.length
-      ? ["in", ["get", "operator"], ["literal", ops]]
-      : ["literal", true];
-    const lineFilter: FilterSpecification = ["all", lineOpFilter, sel.hideOthers && hasHi ? lineIsHi : ["literal", true]];
+    const lineFilter: FilterSpecification = sel.hideOthers && hasHi ? lineIsHi : all;
     const lineOpacity: ExpressionSpecification = hasHi ? ["case", lineIsHi, 1, DIM_LINE] : ["literal", 1];
     const sortKey: ExpressionSpecification = ["case", lineIsHi, 1, 0];
 
-    for (const id of [L_CASING, L_LINE, L_HIT, L_LABEL]) map.setFilter(id, lineFilter);
+    for (const id of [L_CASING, L_LINE, L_HIT]) map.setFilter(id, lineFilter);
     map.setPaintProperty(L_CASING, "line-opacity", lineOpacity);
     map.setPaintProperty(L_LINE, "line-opacity", lineOpacity);
     map.setLayoutProperty(L_CASING, "line-sort-key", sortKey);
     map.setLayoutProperty(L_LINE, "line-sort-key", sortKey);
-    map.setLayoutProperty(L_LABEL, "visibility", "visible");
-    map.setFilter(L_LABEL, hasHi ? ["all", lineFilter, lineIsHi] : lineFilter);
+    map.setFilter(L_LABEL, hasHi ? lineIsHi : all);
 
     const stIsHi: ExpressionSpecification = hasHi
       ? ["any", ...hi.map((id): ExpressionSpecification => ["in", id, ["get", "lines"]])]
       : ["literal", true];
-    const stOpFilter: ExpressionSpecification = ops.length
-      ? ["any", ...ops.map((o): ExpressionSpecification => ["in", o, ["get", "operators"]])]
-      : ["literal", true];
-    const stFilter: FilterSpecification = ["all", stOpFilter, sel.hideOthers && hasHi ? stIsHi : ["literal", true]];
-    map.setFilter(L_STATION, stFilter);
+    map.setFilter(L_STATION, sel.hideOthers && hasHi ? stIsHi : all);
     map.setPaintProperty(L_STATION, "circle-opacity", hasHi ? ["case", stIsHi, 1, DIM_STATION] : 1);
     map.setPaintProperty(L_STATION, "circle-stroke-opacity", hasHi ? ["case", stIsHi, 1, DIM_STATION] : 1);
 
     // ラベル: 何か選んでいるときはその路線の全駅、通常時は 13 未満で乗換駅のみ
-    const labelBase: ExpressionSpecification = hasHi
+    const labelFilter: FilterSpecification = hasHi
       ? stIsHi
       : ["any", [">=", ["zoom"], 13], [">", ["get", "lineCount"], 1]];
-    map.setFilter(L_STATION_LABEL, ["all", stOpFilter, labelBase]);
+    map.setFilter(L_STATION_LABEL, labelFilter);
 
     map.setFilter(L_STATION_SELECTED, ["==", ["get", "id"], sel.station ?? ""]);
   }

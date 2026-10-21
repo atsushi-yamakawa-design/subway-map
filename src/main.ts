@@ -8,7 +8,21 @@ const status = document.getElementById("status")!;
 const sidebar = document.getElementById("sidebar")!;
 const toggleSidebar = document.getElementById("toggle-sidebar")!;
 
-toggleSidebar.addEventListener("click", () => sidebar.classList.toggle("collapsed"));
+function setSidebarOpen(open: boolean): void {
+  sidebar.classList.toggle("collapsed", !open);
+  toggleSidebar.setAttribute("aria-expanded", String(open));
+  try {
+    localStorage.setItem("sidebarOpen", open ? "1" : "0");
+  } catch {
+    /* プライベートモードなどで保存できなくても動作には影響しない */
+  }
+}
+toggleSidebar.addEventListener("click", () => setSidebarOpen(sidebar.classList.contains("collapsed")));
+try {
+  if (localStorage.getItem("sidebarOpen") === "0") setSidebarOpen(false);
+} catch {
+  /* noop */
+}
 
 async function boot(): Promise<void> {
   let data;
@@ -33,7 +47,7 @@ async function boot(): Promise<void> {
     onStation(id) {
       state.selectStation(id);
       rail.focusStation(id);
-      if (window.innerWidth <= 720) sidebar.classList.add("collapsed");
+      if (window.innerWidth <= 720) setSidebarOpen(false);
     },
   });
 

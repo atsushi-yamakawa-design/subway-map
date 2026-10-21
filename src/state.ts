@@ -1,25 +1,24 @@
 /**
  * 選択状態。URL のハッシュと同期して共有できるようにする。
- *   #l=<lineId>,<lineId>&s=<stationId>&o=<operator>,<operator>&h=1
+ *   #l=<lineId>,<lineId>&s=<stationId>&h=1
  */
 export interface Selection {
   lines: Set<string>;
   station: string | null;
-  operators: Set<string>;
   hideOthers: boolean;
 }
 
 type Listener = (s: Selection, changed: Set<keyof Selection>) => void;
 
 export class AppState {
-  private sel: Selection = { lines: new Set(), station: null, operators: new Set(), hideOthers: false };
+  private sel: Selection = { lines: new Set(), station: null, hideOthers: false };
   private listeners: Listener[] = [];
 
   constructor() {
     this.readHash();
     window.addEventListener("hashchange", () => {
       this.readHash();
-      this.emit(new Set(["lines", "station", "operators", "hideOthers"]));
+      this.emit(new Set(["lines", "station", "hideOthers"]));
     });
   }
 
@@ -53,17 +52,6 @@ export class AppState {
     this.commit(["station"]);
   }
 
-  toggleOperator(name: string): void {
-    if (this.sel.operators.has(name)) this.sel.operators.delete(name);
-    else this.sel.operators.add(name);
-    this.commit(["operators"]);
-  }
-
-  clearOperators(): void {
-    this.sel.operators.clear();
-    this.commit(["operators"]);
-  }
-
   setHideOthers(v: boolean): void {
     this.sel.hideOthers = v;
     this.commit(["hideOthers"]);
@@ -90,7 +78,6 @@ export class AppState {
     this.sel = {
       lines: new Set(list("l")),
       station: params.get("s") || null,
-      operators: new Set(list("o")),
       hideOthers: params.get("h") === "1",
     };
   }
@@ -99,7 +86,6 @@ export class AppState {
     const p = new URLSearchParams();
     if (this.sel.lines.size) p.set("l", [...this.sel.lines].join(","));
     if (this.sel.station) p.set("s", this.sel.station);
-    if (this.sel.operators.size) p.set("o", [...this.sel.operators].join(","));
     if (this.sel.hideOthers) p.set("h", "1");
     const hash = p.toString();
     const url = hash ? `#${hash}` : location.pathname + location.search;

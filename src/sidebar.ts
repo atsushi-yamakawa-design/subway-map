@@ -23,8 +23,6 @@ export function createSidebar(data: MapData, state: AppState, handlers: SidebarH
   const chips = $<HTMLDivElement>("chips");
   const hideOthers = $<HTMLInputElement>("hide-others");
   const clearBtn = $<HTMLButtonElement>("clear");
-  const operatorList = $<HTMLDivElement>("operator-list");
-  const operatorCount = $<HTMLSpanElement>("operator-count");
   const regionLabel = $<HTMLSpanElement>("region-label");
 
   if (data.meta) regionLabel.textContent = data.meta.region;
@@ -66,29 +64,9 @@ export function createSidebar(data: MapData, state: AppState, handlers: SidebarH
     minMatchCharLength: 1,
   });
 
-  // ---- 事業者フィルタ ----
-  for (const op of data.operators) {
-    const label = document.createElement("label");
-    const cb = document.createElement("input");
-    cb.type = "checkbox";
-    cb.value = op.name;
-    cb.addEventListener("change", () => state.toggleOperator(op.name));
-    label.appendChild(cb);
-    label.append(op.short === op.name ? op.name : `${op.short}（${op.name}）`);
-    const count = document.createElement("span");
-    count.className = "count";
-    count.textContent = `${op.lineCount}路線`;
-    label.appendChild(count);
-    operatorList.appendChild(label);
-  }
-
   // ---- 描画 ----
   function render(sel: Selection): void {
     hideOthers.checked = sel.hideOthers;
-    operatorCount.textContent = sel.operators.size ? `${sel.operators.size}社を選択中` : "";
-    for (const cb of operatorList.querySelectorAll<HTMLInputElement>("input")) {
-      cb.checked = sel.operators.has(cb.value);
-    }
     renderChips(sel);
     renderResults(sel);
   }
@@ -130,28 +108,25 @@ export function createSidebar(data: MapData, state: AppState, handlers: SidebarH
     results.replaceChildren();
     if (q) {
       const hits = fuse.search(q, { limit: 40 }).map((r) => r.item);
-      const filtered = hits.filter((d) => passesOperatorFilter(d, sel));
-      if (filtered.length === 0) {
+      if (hits.length === 0) {
         results.appendChild(empty("該当なし"));
         return;
       }
-      for (const d of filtered) results.appendChild(row(d, sel));
+      for (const d of hits) results.appendChild(row(d, sel));
       return;
     }
     // クエリ無し: 事業者ごとに路線一覧
     const byOp = new Map<string, Doc[]>();
     for (const d of docs) {
       if (d.kind !== "line") continue;
-      const line = data.lineById.get(d.id)!;
-      if (sel.operators.size && !sel.operators.has(line.properties.operator)) continue;
-      const key = line.properties.operator;
+      const key = data.lineById.get(d.id)!.properties.operator;
       (byOp.get(key) ?? byOp.set(key, []).get(key)!).push(d);
     }
     const ops = data.operators.filter((o) => byOp.has(o.name));
     for (const op of ops) {
       const group = document.createElement("details");
       group.className = "group";
-      group.open = ops.length <= 3 || sel.operators.has(op.name);
+      group.open = ops.length <= 3;
       const summary = document.createElement("summary");
       summary.textContent = op.short;
       const badge = document.createElement("span");
@@ -163,12 +138,6 @@ export function createSidebar(data: MapData, state: AppState, handlers: SidebarH
       results.appendChild(group);
     }
     if (ops.length === 0) results.appendChild(empty("路線がありません"));
-  }
-
-  function passesOperatorFilter(d: Doc, sel: Selection): boolean {
-    if (sel.operators.size === 0) return true;
-    if (d.kind === "line") return sel.operators.has(data.lineById.get(d.id)!.properties.operator);
-    return data.stationById.get(d.id)!.properties.operators.some((o) => sel.operators.has(o));
   }
 
   function row(d: Doc, sel: Selection): HTMLElement {
@@ -221,10 +190,7 @@ export function createSidebar(data: MapData, state: AppState, handlers: SidebarH
     }
   });
   hideOthers.addEventListener("change", () => state.setHideOthers(hideOthers.checked));
-  clearBtn.addEventListener("click", () => {
-    state.clear();
-    state.clearOperators();
-  });
+  clearBtn.addEventListener("click", () => state.clear());
 
   state.subscribe((sel) => render(sel));
   render(state.get());
