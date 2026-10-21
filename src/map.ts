@@ -176,11 +176,76 @@ export function createMap(container: HTMLElement, data: MapData, state: AppState
 
     applySelection(state.get());
     wireInteractions();
+    addPoiLabels();
 
     // 出典は最初から折りたたんでおく（ⓘ をクリックで展開）
     const attrib = container.querySelector<HTMLDetailsElement>("details.maplibregl-ctrl-attrib");
     if (attrib) attrib.open = false;
   });
+
+  // ---- 拡大時のスポット名（ベースマップの OSM POI レイヤーを流用）----
+  // Positron スタイルは POI を描かないので、同じベクタータイルの poi レイヤーから
+  // 名前だけを薄く出す。路線・駅のラベルより後に追加して優先度を下げる。
+  function addPoiLabels(): void {
+    const style = map.getStyle();
+    const sourceId = Object.entries(style.sources).find(([, src]) => src.type === "vector")?.[0];
+    if (!sourceId) return;
+    const addIfPossible = () => {
+      if (map.getLayer("poi-labels")) return;
+      const src = map.getSource(sourceId) as { vectorLayerIds?: string[] } | undefined;
+      // TileJSON に層一覧があって poi が無いなら諦める。一覧が無ければ試す
+      if (src?.vectorLayerIds && !src.vectorLayerIds.includes("poi")) return;
+      const rank: ExpressionSpecification = ["coalesce", ["get", "rank"], 30];
+      map.addLayer({
+        id: "poi-labels",
+        type: "symbol",
+        source: sourceId,
+        "source-layer": "poi",
+        minzoom: 14,
+        filter: [
+          "all",
+          // 駅・バス停・出入口などは自前で描くか不要なので除外
+          ["!", ["in", ["get", "class"], ["literal", ["railway", "bus", "entrance", "subway", "tram_stop", "ferry_terminal"]]]],
+          ["has", "name"],
+          // ズームが浅いうちは重要度の高いものだけ
+          ["case", ["<", ["zoom"], 15], ["<=", rank, 5], ["<", ["zoom"], 16], ["<=", rank, 15], true],
+        ],
+        layout: {
+          "text-field": ["coalesce", ["get", "name:ja"], ["get", "name"]],
+          "text-font": ["Noto Sans Regular"],
+          "text-size": ["interpolate", ["linear"], ["zoom"], 14, 10, 17, 12],
+          "text-max-width": 8,
+          "text-anchor": "top",
+          "text-offset": [0, 0.4],
+          "text-padding": 6,
+          "text-optional": true,
+          "symbol-sort-key": rank,
+        },
+        paint: {
+          "text-color": "#6b7280",
+          "text-halo-color": "rgba(255,255,255,0.9)",
+          "text-halo-width": 1.5,
+        },
+      });
+      map.addLayer(
+        {
+          id: "poi-dots",
+          type: "circle",
+          source: sourceId,
+          "source-layer": "poi",
+          minzoom: 15,
+          filter: map.getFilter("poi-labels") ?? ["literal", true],
+          paint: { "circle-radius": 2, "circle-color": "#9ca3af", "circle-opacity": 0.8 },
+        },
+        "poi-labels",
+      );
+    };
+    addIfPossible();
+    // タイルの TileJSON がまだ来ていなければ、来てから追加する
+    map.on("sourcedata", (e) => {
+      if (e.sourceId === sourceId && e.isSourceLoaded) addIfPossible();
+    });
+  }
 
   // ---- 選択状態をスタイルに反映 ----
   function highlightedLines(sel: Selection): string[] {
