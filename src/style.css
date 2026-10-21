@@ -96,13 +96,32 @@ body { background: var(--bg); }
 .row .main { display: flex; flex-direction: column; min-width: 0; }
 .row .title { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .row .sub { color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.row .kind { margin-left: auto; font-size: 11px; border-radius: 4px; padding: 2px 6px; flex: 0 0 auto; font-weight: 600; }
-.row .kind.line { background: #eef2ff; color: #3730a3; }
-.row .kind.station { background: #ecfdf5; color: #065f46; }
 .empty { padding: 24px 16px; color: var(--muted); text-align: center; }
 
-.sb-footer { padding: 8px 16px; border-top: 1px solid var(--border); line-height: 1.5; }
-.sb-footer a { color: inherit; }
+/* ---- 左下のリセットボタン ---- */
+.icon-btn {
+  position: absolute; z-index: 5;
+  width: 36px; height: 36px; border-radius: 50%;
+  display: grid; place-items: center;
+  border: 1px solid var(--border); background: rgba(255,255,255,0.95); color: var(--fg); cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  transition: transform 150ms var(--ease), background-color 150ms;
+}
+.icon-btn:hover { background: var(--hover); }
+.icon-btn:active { transform: scale(0.94); }
+.icon-btn svg { width: 18px; height: 18px; }
+.reset { left: 12px; bottom: 12px; }
+
+/* MapLibre の左下コントロール（出典 ⓘ とスケール）はリセットボタンの右に横並びで、小さく薄く。
+   maplibre-gl.css の方がバンドル順で後に来るので #map で優先度を上げる */
+#map .maplibregl-ctrl-bottom-left { left: 52px; bottom: 14px; display: flex; align-items: flex-end; gap: 6px; }
+#map .maplibregl-ctrl-bottom-left .maplibregl-ctrl { margin: 0; opacity: 0.55; transition: opacity 150ms; }
+#map .maplibregl-ctrl-bottom-left .maplibregl-ctrl:hover,
+#map .maplibregl-ctrl-bottom-left .maplibregl-ctrl:focus-within { opacity: 1; }
+#map .maplibregl-ctrl-attrib { font-size: 10px; }
+#map .maplibregl-ctrl-attrib.maplibregl-compact { min-height: 20px; }
+#map .maplibregl-ctrl-attrib.maplibregl-compact-show { padding: 2px 26px 2px 6px; }
+#map .maplibregl-ctrl-scale { font-size: 9px; border-width: 0 1px 1px 1px; background: rgba(255,255,255,0.6); }
 
 .status {
   position: absolute; top: 12px; left: 50%; transform: translateX(-50%);

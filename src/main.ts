@@ -61,7 +61,7 @@ async function boot(): Promise<void> {
   const state = new AppState();
   const rail = createMap(document.getElementById("map")!, data, state);
 
-  createSidebar(data, state, {
+  const sidebarApi = createSidebar(data, state, {
     onLine(id) {
       const wasSelected = state.get().lines.has(id);
       state.toggleLine(id);
@@ -72,6 +72,11 @@ async function boot(): Promise<void> {
       rail.focusStation(id);
       if (window.innerWidth <= 720) setSidebarOpen(false);
     },
+  });
+
+  document.getElementById("reset")!.addEventListener("click", () => {
+    sidebarApi.clearQuery();
+    rail.resetView();
   });
 
   // URL に選択が入っていたら最初からそこへ寄せる

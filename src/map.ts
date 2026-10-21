@@ -37,6 +37,8 @@ export interface RailMap {
   map: MLMap;
   focusLine(id: string): void;
   focusStation(id: string): void;
+  /** 選択を全部解除してポップアップを閉じ、全体表示（北が上）に戻す */
+  resetView(): void;
 }
 
 export function createMap(container: HTMLElement, data: MapData, state: AppState): RailMap {
@@ -49,7 +51,14 @@ export function createMap(container: HTMLElement, data: MapData, state: AppState
   });
   // ズーム + コンパス（クリックで北が上に戻る）
   map.addControl(new NavigationControl({ showCompass: true, visualizePitch: true }), "top-right");
-  map.addControl(new AttributionControl({ compact: true }), "bottom-left");
+  map.addControl(
+    new AttributionControl({
+      compact: true,
+      customAttribution:
+        '出典: <a href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N02-2024.html" target="_blank" rel="noopener">国土数値情報（鉄道データ）</a> 国土交通省',
+    }),
+    "bottom-left",
+  );
   // 右下は検索 FAB に譲るので、スケールは左下
   map.addControl(new ScaleControl({ unit: "metric" }), "bottom-left");
 
@@ -167,6 +176,10 @@ export function createMap(container: HTMLElement, data: MapData, state: AppState
 
     applySelection(state.get());
     wireInteractions();
+
+    // 出典は最初から折りたたんでおく（ⓘ をクリックで展開）
+    const attrib = container.querySelector<HTMLDetailsElement>("details.maplibregl-ctrl-attrib");
+    if (attrib) attrib.open = false;
   });
 
   // ---- 選択状態をスタイルに反映 ----
@@ -270,7 +283,11 @@ export function createMap(container: HTMLElement, data: MapData, state: AppState
       (btn.children[0] as HTMLElement).style.background = line.properties.color;
       btn.children[1]!.textContent = line.properties.shortName;
       btn.children[2]!.textContent = line.properties.operatorShort;
-      btn.addEventListener("click", () => state.toggleLine(lid));
+      btn.addEventListener("click", () => {
+        const willSelect = !state.get().lines.has(lid);
+        state.toggleLine(lid);
+        if (willSelect) focusLine(lid);
+      });
       el.appendChild(btn);
     }
     popup = new Popup({ offset: 12, closeButton: false, maxWidth: "280px" })
@@ -292,5 +309,11 @@ export function createMap(container: HTMLElement, data: MapData, state: AppState
     openStationPopup(id);
   }
 
-  return { map, focusLine, focusStation };
+  function resetView(): void {
+    popup?.remove();
+    state.clear();
+    map.fitBounds(data.bbox as LngLatBoundsLike, { padding: 40, duration: 700, bearing: 0, pitch: 0 });
+  }
+
+  return { map, focusLine, focusStation, resetView };
 }

@@ -16,7 +16,11 @@ export interface SidebarHandlers {
   onStation(id: string): void;
 }
 
-export function createSidebar(data: MapData, state: AppState, handlers: SidebarHandlers): void {
+export interface Sidebar {
+  clearQuery(): void;
+}
+
+export function createSidebar(data: MapData, state: AppState, handlers: SidebarHandlers): Sidebar {
   const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
   const input = $<HTMLInputElement>("search");
   const results = $<HTMLDivElement>("results");
@@ -165,10 +169,7 @@ export function createSidebar(data: MapData, state: AppState, handlers: SidebarH
     sub.className = "sub";
     sub.textContent = d.sub;
     main.append(title, sub);
-    const kind = document.createElement("span");
-    kind.className = `kind ${d.kind}`;
-    kind.textContent = d.kind === "line" ? "路線" : "駅";
-    btn.append(sw, main, kind);
+    btn.append(sw, main);
     btn.addEventListener("click", () => {
       if (d.kind === "line") handlers.onLine(d.id);
       else handlers.onStation(d.id);
@@ -197,4 +198,11 @@ export function createSidebar(data: MapData, state: AppState, handlers: SidebarH
 
   state.subscribe((sel) => render(sel));
   render(state.get());
+
+  return {
+    clearQuery() {
+      input.value = "";
+      renderResults(state.get());
+    },
+  };
 }

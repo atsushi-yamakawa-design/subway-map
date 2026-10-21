@@ -19,16 +19,15 @@
           </div>
           <div id="chips" class="chips" aria-live="polite"></div>
           <div id="results" class="results" role="listbox"></div>
-          <footer class="sb-footer muted">
-            データ: <a href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N02-2024.html" target="_blank" rel="noopener">国土数値情報（鉄道データ）</a> 国土交通省 /
-            地図: <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © OpenStreetMap
-          </footer>
         </div>
       </aside>
       <main id="map-wrap">
         <div id="map" role="application" aria-label="地図"></div>
         <h1 class="brand"><span>路線マップ</span><span id="region-label" class="brand-sub"></span></h1>
         <div id="status" class="status">データを読み込み中…</div>
+        <button id="reset" class="icon-btn reset" type="button" aria-label="選択を解除して全体を表示" title="リセット">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.6-5.9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4 4v5h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
         <button id="toggle-sidebar" class="fab" type="button" aria-expanded="true" aria-controls="sidebar" aria-label="検索">
           <svg class="ic-search" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M20.5 20.5l-4.2-4.2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
           <svg class="ic-close" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
