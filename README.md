@@ -43,6 +43,9 @@ npm run build
 `main` への push で GitHub Actions が N02 をダウンロードし、データ生成・ビルド・GitHub Pages への配信まで行う。
 `workflow_dispatch` から `region` を指定して全国版などを作り直すこともできる。
 
+初回だけ、リポジトリの Settings → Pages → Build and deployment → Source を **GitHub Actions** にしておく必要がある
+（Actions のトークンでは Pages サイトを作成できないため）。
+
 ## 路線カラー
 
 N02 には色情報が無いので `scripts/lib/colors.ts` に手で持っている。

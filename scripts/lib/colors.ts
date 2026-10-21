@@ -59,6 +59,7 @@ export const COLOR_RULES: ColorRule[] = [
   { operator: "東日本旅客鉄道", line: "北陸新幹線", color: "#1F3A93" },
   // ---- JR東海・西日本 ----
   { operator: "東海旅客鉄道", line: "新幹線", color: "#1D4F91" },
+  { operator: "東海旅客鉄道", line: "", color: "#F77321" },
   { operator: "西日本旅客鉄道", line: "新幹線", color: "#0072BC" },
   { operator: "西日本旅客鉄道", line: "大阪環状線", color: "#E52B22" },
   { operator: "西日本旅客鉄道", line: "阪和線", color: "#F68B1E" },
