@@ -254,14 +254,46 @@ export function createMap(container: HTMLElement, data: MapData, state: AppState
         state.selectStation(id);
         return;
       }
-      const line = feats.find((f) => f.layer.id === L_HIT);
-      if (line) {
-        state.toggleLine(String(line.properties["id"]));
+      // 路線: タップ位置に重なっている路線を全部吹き出しに出し、先頭を選択状態にする
+      const lineIds = [...new Set(feats.filter((f) => f.layer.id === L_HIT).map((f) => String(f.properties["id"])))];
+      if (lineIds.length > 0) {
+        const first = lineIds[0]!;
+        if (!state.get().lines.has(first)) state.toggleLine(first);
+        openLinePopup(e.lngLat, lineIds);
         return;
       }
       popup?.remove();
       if (state.get().station) state.selectStation(null);
     });
+  }
+
+  /** 路線ボタン。クリックで選択してその路線全体にフィット */
+  function lineButton(lid: string): HTMLButtonElement | null {
+    const line = data.lineById.get(lid);
+    if (!line) return null;
+    const btn = document.createElement("button");
+    btn.className = "popup-line";
+    btn.type = "button";
+    btn.title = "この路線の全体を表示";
+    btn.innerHTML = `<span class="dot"></span><span></span><span class="op"></span>`;
+    (btn.children[0] as HTMLElement).style.background = line.properties.color;
+    btn.children[1]!.textContent = line.properties.shortName;
+    btn.children[2]!.textContent = line.properties.operatorShort;
+    btn.addEventListener("click", () => {
+      if (!state.get().lines.has(lid)) state.toggleLine(lid);
+      focusLine(lid);
+    });
+    return btn;
+  }
+
+  function openLinePopup(lngLat: { lng: number; lat: number }, lineIds: string[]): void {
+    popup?.remove();
+    const el = document.createElement("div");
+    for (const lid of lineIds) {
+      const btn = lineButton(lid);
+      if (btn) el.appendChild(btn);
+    }
+    popup = new Popup({ offset: 10, closeButton: false, maxWidth: "280px" }).setLngLat(lngLat).setDOMContent(el).addTo(map);
   }
 
   function openStationPopup(id: string): void {
@@ -274,21 +306,8 @@ export function createMap(container: HTMLElement, data: MapData, state: AppState
     title.textContent = st.properties.name;
     el.appendChild(title);
     for (const lid of st.properties.lines) {
-      const line = data.lineById.get(lid);
-      if (!line) continue;
-      const btn = document.createElement("button");
-      btn.className = "popup-line";
-      btn.type = "button";
-      btn.innerHTML = `<span class="dot"></span><span></span><span class="op"></span>`;
-      (btn.children[0] as HTMLElement).style.background = line.properties.color;
-      btn.children[1]!.textContent = line.properties.shortName;
-      btn.children[2]!.textContent = line.properties.operatorShort;
-      btn.addEventListener("click", () => {
-        const willSelect = !state.get().lines.has(lid);
-        state.toggleLine(lid);
-        if (willSelect) focusLine(lid);
-      });
-      el.appendChild(btn);
+      const btn = lineButton(lid);
+      if (btn) el.appendChild(btn);
     }
     popup = new Popup({ offset: 12, closeButton: false, maxWidth: "280px" })
       .setLngLat(st.geometry.coordinates as [number, number])
