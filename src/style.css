@@ -101,22 +101,22 @@ body { background: var(--bg); }
 .empty { padding: 24px 16px; color: var(--muted); text-align: center; }
 
 /* ---- 左下のリセットボタン ---- */
-.icon-btn {
-  position: absolute; z-index: 5;
-  width: 36px; height: 36px; border-radius: 50%;
-  display: grid; place-items: center;
+.reset {
+  position: absolute; z-index: 5; left: 12px; bottom: 12px;
+  height: 40px; padding: 0 14px 0 10px; border-radius: 999px;
+  display: inline-flex; align-items: center; gap: 6px;
   border: 1px solid var(--border); background: rgba(255,255,255,0.95); color: var(--fg); cursor: pointer;
+  font: inherit; font-size: 13px; font-weight: 600;
   box-shadow: 0 2px 8px rgba(0,0,0,0.12);
   transition: transform 150ms var(--ease), background-color 150ms;
 }
-.icon-btn:hover { background: var(--hover); }
-.icon-btn:active { transform: scale(0.94); }
-.icon-btn svg { width: 18px; height: 18px; }
-.reset { left: 12px; bottom: 12px; }
+.reset:hover { background: var(--hover); }
+.reset:active { transform: scale(0.96); }
+.reset svg { width: 18px; height: 18px; }
 
 /* MapLibre の左下コントロール（出典 ⓘ とスケール）はリセットボタンの右に横並びで、小さく薄く。
    maplibre-gl.css の方がバンドル順で後に来るので #map で優先度を上げる */
-#map .maplibregl-ctrl-bottom-left { left: 52px; bottom: 14px; display: flex; align-items: flex-end; gap: 6px; }
+#map .maplibregl-ctrl-bottom-left { left: 126px; bottom: 16px; display: flex; align-items: flex-end; gap: 6px; }
 #map .maplibregl-ctrl-bottom-left .maplibregl-ctrl { margin: 0; opacity: 0.55; transition: opacity 150ms; }
 #map .maplibregl-ctrl-bottom-left .maplibregl-ctrl:hover,
 #map .maplibregl-ctrl-bottom-left .maplibregl-ctrl:focus-within { opacity: 1; }
