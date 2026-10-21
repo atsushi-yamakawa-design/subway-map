@@ -15,11 +15,12 @@
             <span id="region-label" class="muted"></span>
           </header>
           <div class="sb-search">
-            <input id="search" type="search" placeholder="路線・駅を検索（例: 銀座線、新宿）" autocomplete="off" />
+            <input id="search" type="search" placeholder="路線・駅を検索（例: 銀座線、新宿）" autocomplete="off" enterkeyhint="search" />
           </div>
-          <div class="sb-controls">
-            <label class="toggle"><input id="hide-others" type="checkbox" /> 選択した路線以外を隠す</label>
-            <button id="clear" type="button" class="link-btn">選択をクリア</button>
+          <div class="seg" role="radiogroup" aria-label="種類で絞り込む">
+            <button type="button" class="seg-btn" data-kind="all" role="radio" aria-checked="true">すべて</button>
+            <button type="button" class="seg-btn" data-kind="line" role="radio" aria-checked="false">路線</button>
+            <button type="button" class="seg-btn" data-kind="station" role="radio" aria-checked="false">駅</button>
           </div>
           <div id="chips" class="chips" aria-live="polite"></div>
           <div id="results" class="results" role="listbox"></div>
@@ -32,10 +33,9 @@
       <main id="map-wrap">
         <div id="map" role="application" aria-label="地図"></div>
         <div id="status" class="status">データを読み込み中…</div>
-        <button id="toggle-sidebar" type="button" aria-expanded="true" aria-controls="sidebar" title="検索パネルを開閉">
-          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          <span>検索</span>
-          <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <button id="toggle-sidebar" class="fab" type="button" aria-expanded="true" aria-controls="sidebar" aria-label="検索">
+          <svg class="ic-search" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M20.5 20.5l-4.2-4.2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+          <svg class="ic-close" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
       </main>
     </div>

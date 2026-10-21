@@ -1,4 +1,5 @@
 import {
+  AttributionControl,
   Map as MLMap,
   NavigationControl,
   Popup,
@@ -44,11 +45,13 @@ export function createMap(container: HTMLElement, data: MapData, state: AppState
     style: STYLE_URL,
     bounds: data.bbox as LngLatBoundsLike,
     fitBoundsOptions: { padding: 40 },
-    attributionControl: { compact: true },
+    attributionControl: false,
   });
   // ズーム + コンパス（クリックで北が上に戻る）
   map.addControl(new NavigationControl({ showCompass: true, visualizePitch: true }), "top-right");
-  map.addControl(new ScaleControl({ unit: "metric" }), "bottom-right");
+  map.addControl(new AttributionControl({ compact: true }), "bottom-left");
+  // 右下は検索 FAB に譲るので、スケールは左下
+  map.addControl(new ScaleControl({ unit: "metric" }), "bottom-left");
 
   // ホバー中は太くする。["zoom"] はトップレベルの interpolate の入力にしか置けないので、
   // 乗算は各ストップの出力側に入れる。
@@ -183,7 +186,7 @@ export function createMap(container: HTMLElement, data: MapData, state: AppState
     const all: FilterSpecification = ["literal", true];
 
     const lineIsHi: ExpressionSpecification = hasHi ? ["in", ["get", "id"], ["literal", hi]] : ["literal", true];
-    const lineFilter: FilterSpecification = sel.hideOthers && hasHi ? lineIsHi : all;
+    const lineFilter: FilterSpecification = all;
     const lineOpacity: ExpressionSpecification = hasHi ? ["case", lineIsHi, 1, DIM_LINE] : ["literal", 1];
     const sortKey: ExpressionSpecification = ["case", lineIsHi, 1, 0];
 
@@ -197,7 +200,7 @@ export function createMap(container: HTMLElement, data: MapData, state: AppState
     const stIsHi: ExpressionSpecification = hasHi
       ? ["any", ...hi.map((id): ExpressionSpecification => ["in", id, ["get", "lines"]])]
       : ["literal", true];
-    map.setFilter(L_STATION, sel.hideOthers && hasHi ? stIsHi : all);
+    map.setFilter(L_STATION, all);
     map.setPaintProperty(L_STATION, "circle-opacity", hasHi ? ["case", stIsHi, 1, DIM_STATION] : 1);
     map.setPaintProperty(L_STATION, "circle-stroke-opacity", hasHi ? ["case", stIsHi, 1, DIM_STATION] : 1);
 

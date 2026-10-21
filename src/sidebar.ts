@@ -21,8 +21,7 @@ export function createSidebar(data: MapData, state: AppState, handlers: SidebarH
   const input = $<HTMLInputElement>("search");
   const results = $<HTMLDivElement>("results");
   const chips = $<HTMLDivElement>("chips");
-  const hideOthers = $<HTMLInputElement>("hide-others");
-  const clearBtn = $<HTMLButtonElement>("clear");
+  const segButtons = [...document.querySelectorAll<HTMLButtonElement>(".seg-btn")];
   const regionLabel = $<HTMLSpanElement>("region-label");
 
   if (data.meta) regionLabel.textContent = data.meta.region;
@@ -64,9 +63,19 @@ export function createSidebar(data: MapData, state: AppState, handlers: SidebarH
     minMatchCharLength: 1,
   });
 
+  // ---- 種類の絞り込み（UI だけの状態。URL には入れない）----
+  type Kind = "all" | "line" | "station";
+  let kind: Kind = "all";
+  for (const btn of segButtons) {
+    btn.addEventListener("click", () => {
+      kind = (btn.dataset["kind"] as Kind) ?? "all";
+      for (const b of segButtons) b.setAttribute("aria-checked", String(b === btn));
+      renderResults(state.get());
+    });
+  }
+
   // ---- 描画 ----
   function render(sel: Selection): void {
-    hideOthers.checked = sel.hideOthers;
     renderChips(sel);
     renderResults(sel);
   }
@@ -81,6 +90,14 @@ export function createSidebar(data: MapData, state: AppState, handlers: SidebarH
     if (sel.station) {
       const st = data.stationById.get(sel.station);
       if (st) chips.appendChild(chip(null, `${st.properties.name}駅`, () => state.selectStation(null)));
+    }
+    if (chips.childElementCount > 0) {
+      const clear = document.createElement("button");
+      clear.type = "button";
+      clear.className = "link-btn";
+      clear.textContent = "クリア";
+      clear.addEventListener("click", () => state.clear());
+      chips.appendChild(clear);
     }
   }
 
@@ -106,13 +123,21 @@ export function createSidebar(data: MapData, state: AppState, handlers: SidebarH
   function renderResults(sel: Selection): void {
     const q = input.value.trim();
     results.replaceChildren();
+    const matchesKind = (d: Doc) => kind === "all" || d.kind === kind;
     if (q) {
-      const hits = fuse.search(q, { limit: 40 }).map((r) => r.item);
+      const hits = fuse.search(q, { limit: 60 }).map((r) => r.item).filter(matchesKind).slice(0, 40);
       if (hits.length === 0) {
         results.appendChild(empty("該当なし"));
         return;
       }
       for (const d of hits) results.appendChild(row(d, sel));
+      return;
+    }
+    // クエリ無しで「駅」: 駅を五十音順ではなく名前順に一覧（かなが無いので文字コード順）
+    if (kind === "station") {
+      const frag = document.createDocumentFragment();
+      for (const d of docs) if (d.kind === "station") frag.appendChild(row(d, sel));
+      results.appendChild(frag);
       return;
     }
     // クエリ無し: 事業者ごとに路線一覧
@@ -189,8 +214,6 @@ export function createSidebar(data: MapData, state: AppState, handlers: SidebarH
       renderResults(state.get());
     }
   });
-  hideOthers.addEventListener("change", () => state.setHideOthers(hideOthers.checked));
-  clearBtn.addEventListener("click", () => state.clear());
 
   state.subscribe((sel) => render(sel));
   render(state.get());

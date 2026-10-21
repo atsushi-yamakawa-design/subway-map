@@ -17,7 +17,15 @@ function setSidebarOpen(open: boolean): void {
     /* プライベートモードなどで保存できなくても動作には影響しない */
   }
 }
-toggleSidebar.addEventListener("click", () => setSidebarOpen(sidebar.classList.contains("collapsed")));
+toggleSidebar.addEventListener("click", () => {
+  const open = sidebar.classList.contains("collapsed");
+  setSidebarOpen(open);
+  if (open) {
+    // 入力欄は 16px なのでフォーカスしても iOS が画面を拡大しない
+    const input = document.getElementById("search") as HTMLInputElement | null;
+    input?.focus({ preventScroll: true });
+  }
+});
 try {
   if (localStorage.getItem("sidebarOpen") === "0") setSidebarOpen(false);
 } catch {

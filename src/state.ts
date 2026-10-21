@@ -1,24 +1,23 @@
 /**
  * 選択状態。URL のハッシュと同期して共有できるようにする。
- *   #l=<lineId>,<lineId>&s=<stationId>&h=1
+ *   #l=<lineId>,<lineId>&s=<stationId>
  */
 export interface Selection {
   lines: Set<string>;
   station: string | null;
-  hideOthers: boolean;
 }
 
 type Listener = (s: Selection, changed: Set<keyof Selection>) => void;
 
 export class AppState {
-  private sel: Selection = { lines: new Set(), station: null, hideOthers: false };
+  private sel: Selection = { lines: new Set(), station: null };
   private listeners: Listener[] = [];
 
   constructor() {
     this.readHash();
     window.addEventListener("hashchange", () => {
       this.readHash();
-      this.emit(new Set(["lines", "station", "hideOthers"]));
+      this.emit(new Set(["lines", "station"]));
     });
   }
 
@@ -52,11 +51,6 @@ export class AppState {
     this.commit(["station"]);
   }
 
-  setHideOthers(v: boolean): void {
-    this.sel.hideOthers = v;
-    this.commit(["hideOthers"]);
-  }
-
   clear(): void {
     this.sel.lines.clear();
     this.sel.station = null;
@@ -78,7 +72,6 @@ export class AppState {
     this.sel = {
       lines: new Set(list("l")),
       station: params.get("s") || null,
-      hideOthers: params.get("h") === "1",
     };
   }
 
@@ -86,7 +79,6 @@ export class AppState {
     const p = new URLSearchParams();
     if (this.sel.lines.size) p.set("l", [...this.sel.lines].join(","));
     if (this.sel.station) p.set("s", this.sel.station);
-    if (this.sel.hideOthers) p.set("h", "1");
     const hash = p.toString();
     const url = hash ? `#${hash}` : location.pathname + location.search;
     history.replaceState(null, "", url);
