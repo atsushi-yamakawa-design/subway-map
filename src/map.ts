@@ -275,10 +275,11 @@ export function createMap(container: HTMLElement, data: MapData, state: AppState
     btn.className = "popup-line";
     btn.type = "button";
     btn.title = "この路線の全体を表示";
-    btn.innerHTML = `<span class="dot"></span><span></span><span class="op"></span>`;
+    btn.innerHTML = `<span class="dot"></span><span class="name"><span class="op-prefix"></span></span>`;
     (btn.children[0] as HTMLElement).style.background = line.properties.color;
-    btn.children[1]!.textContent = line.properties.shortName;
-    btn.children[2]!.textContent = line.properties.operatorShort;
+    const name = btn.children[1]!;
+    name.children[0]!.textContent = line.properties.operatorShort;
+    name.append(line.properties.shortName);
     btn.addEventListener("click", () => {
       if (!state.get().lines.has(lid)) state.toggleLine(lid);
       focusLine(lid);

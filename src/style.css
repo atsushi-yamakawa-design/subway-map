@@ -75,6 +75,8 @@ body { background: var(--bg); }
   to { transform: scale(1); opacity: 1; }
 }
 .chip .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+/* 「東急東横線」の「東急」部分 */
+.op-prefix { color: var(--muted); font-weight: 400; }
 .chip button { border: none; background: none; cursor: pointer; color: var(--muted); padding: 0 2px; font-size: 14px; line-height: 1; }
 .chip button:hover { color: var(--fg); }
 
@@ -180,8 +182,8 @@ body { background: var(--bg); }
   padding: 4px 6px; border: none; background: none; cursor: pointer; text-align: left; font: inherit; border-radius: 4px;
 }
 .popup-line:hover { background: var(--hover); }
-.popup-line .dot { width: 10px; height: 10px; border-radius: 50%; }
-.popup-line .op { color: var(--muted); font-size: 12px; margin-left: auto; }
+.popup-line .dot { width: 10px; height: 10px; border-radius: 50%; flex: 0 0 auto; }
+.popup-line .name { font-weight: 500; }
 
 /* ---- モバイル: パネルは下からスライド ---- */
 @media (max-width: 720px) {

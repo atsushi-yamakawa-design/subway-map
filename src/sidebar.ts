@@ -5,6 +5,8 @@ import type { MapData } from "./types";
 interface Doc extends Searchable {
   kind: "line" | "station";
   id: string;
+  /** 路線なら薄く前置きする事業者名 */
+  prefix?: string;
   title: string;
   sub: string;
   color: string;
@@ -43,8 +45,9 @@ export function createSidebar(data: MapData, state: AppState, handlers: SidebarH
     docs.push({
       kind: "line",
       id: p.id,
+      prefix: p.operatorShort,
       title: p.shortName,
-      sub: `${p.operatorShort} · ${p.stationCount}駅`,
+      sub: `${p.stationCount}駅`,
       color: p.color,
       // 「東横線」「東急東横線」「東急電鉄東横線」「東急」… どの呼び方でも当たるように
       keys: uniq([
@@ -93,7 +96,9 @@ export function createSidebar(data: MapData, state: AppState, handlers: SidebarH
     for (const id of sel.lines) {
       const line = data.lineById.get(id);
       if (!line) continue;
-      chips.appendChild(chip(line.properties.color, line.properties.shortName, () => state.removeLine(id)));
+      chips.appendChild(
+        chip(line.properties.color, line.properties.shortName, () => state.removeLine(id), line.properties.operatorShort),
+      );
     }
     if (sel.station) {
       const st = data.stationById.get(sel.station);
@@ -109,7 +114,7 @@ export function createSidebar(data: MapData, state: AppState, handlers: SidebarH
     }
   }
 
-  function chip(color: string | null, text: string, onRemove: () => void): HTMLElement {
+  function chip(color: string | null, text: string, onRemove: () => void, prefix?: string): HTMLElement {
     const el = document.createElement("span");
     el.className = "chip";
     if (color) {
@@ -117,6 +122,12 @@ export function createSidebar(data: MapData, state: AppState, handlers: SidebarH
       dot.className = "dot";
       dot.style.background = color;
       el.appendChild(dot);
+    }
+    if (prefix) {
+      const pre = document.createElement("span");
+      pre.className = "op-prefix";
+      pre.textContent = prefix;
+      el.appendChild(pre);
     }
     el.append(text);
     const btn = document.createElement("button");
@@ -180,7 +191,13 @@ export function createSidebar(data: MapData, state: AppState, handlers: SidebarH
     main.className = "main";
     const title = document.createElement("span");
     title.className = "title";
-    title.textContent = d.title;
+    if (d.prefix) {
+      const pre = document.createElement("span");
+      pre.className = "op-prefix";
+      pre.textContent = d.prefix;
+      title.appendChild(pre);
+    }
+    title.append(d.title);
     const sub = document.createElement("span");
     sub.className = "sub";
     sub.textContent = d.sub;
