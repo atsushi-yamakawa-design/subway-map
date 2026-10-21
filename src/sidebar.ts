@@ -123,13 +123,16 @@ export function createSidebar(data: MapData, state: AppState, handlers: SidebarH
       dot.style.background = color;
       el.appendChild(dot);
     }
+    // flex の gap が前置き部分と名前の間に入らないよう、1 つのラベル要素にまとめる
+    const label = document.createElement("span");
     if (prefix) {
       const pre = document.createElement("span");
       pre.className = "op-prefix";
       pre.textContent = prefix;
-      el.appendChild(pre);
+      label.appendChild(pre);
     }
-    el.append(text);
+    label.append(text);
+    el.appendChild(label);
     const btn = document.createElement("button");
     btn.type = "button";
     btn.textContent = "×";
