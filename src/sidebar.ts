@@ -1,14 +1,13 @@
-import Fuse from "fuse.js";
+import { Searcher, normalize, type Searchable } from "./search";
 import type { AppState, Selection } from "./state";
 import type { MapData } from "./types";
 
-interface Doc {
+interface Doc extends Searchable {
   kind: "line" | "station";
   id: string;
   title: string;
   sub: string;
   color: string;
-  search: string[]; // 検索対象の文字列
 }
 
 export interface SidebarHandlers {
@@ -31,40 +30,57 @@ export function createSidebar(data: MapData, state: AppState, handlers: SidebarH
 
   // ---- 検索インデックス ----
   const docs: Doc[] = [];
+  const uniq = (arr: string[]) => [...new Set(arr.map(normalize).filter(Boolean))];
+  // 「JR山手線」「メトロ銀座線」のような、さらに縮めた呼び方
+  const brandOf = (operatorShort: string): string | undefined => {
+    if (operatorShort.startsWith("JR")) return "JR";
+    if (operatorShort.includes("メトロ")) return "メトロ";
+    return undefined;
+  };
   for (const f of data.lines.features) {
     const p = f.properties;
+    const brand = brandOf(p.operatorShort);
     docs.push({
       kind: "line",
       id: p.id,
       title: p.shortName,
       sub: `${p.operatorShort} · ${p.stationCount}駅`,
       color: p.color,
-      search: [p.shortName, p.name, p.operator, p.operatorShort],
+      // 「東横線」「東急東横線」「東急電鉄東横線」「東急」… どの呼び方でも当たるように
+      keys: uniq([
+        p.shortName,
+        p.name,
+        p.operatorShort + p.shortName,
+        p.operator + p.shortName,
+        p.operatorShort + p.name,
+        p.operator + p.name,
+        ...(brand ? [brand + p.shortName, brand + p.name] : []),
+        p.operatorShort,
+        p.operator,
+      ]),
     });
   }
   for (const f of data.stations.features) {
     const p = f.properties;
-    const lineNames = p.lines
-      .map((id) => data.lineById.get(id)?.properties.shortName)
-      .filter((v): v is string => !!v);
+    const lines = p.lines.map((id) => data.lineById.get(id)?.properties).filter((v) => !!v);
+    const lineNames = lines.map((l) => l.shortName);
     docs.push({
       kind: "station",
       id: p.id,
       title: p.name,
       sub: lineNames.join("・"),
       color: p.color,
-      search: [p.name],
+      // 「渋谷」「渋谷駅」「銀座線渋谷」「東急渋谷」
+      keys: uniq([
+        p.name,
+        p.name + "駅",
+        ...lines.map((l) => l.shortName + p.name),
+        ...lines.map((l) => l.operatorShort + p.name),
+        ...lines.map((l) => brandOf(l.operatorShort)).filter((b): b is string => !!b).map((b) => b + p.name),
+      ]),
     });
   }
-  const fuse = new Fuse(docs, {
-    keys: [
-      { name: "search", weight: 2 },
-      { name: "sub", weight: 0.5 },
-    ],
-    threshold: 0.3,
-    ignoreLocation: true,
-    minMatchCharLength: 1,
-  });
+  const searcher = new Searcher(docs);
 
   // ---- 描画 ----
   function render(sel: Selection): void {
@@ -116,7 +132,7 @@ export function createSidebar(data: MapData, state: AppState, handlers: SidebarH
     const q = input.value.trim();
     results.replaceChildren();
     if (q) {
-      const hits = fuse.search(q, { limit: 40 }).map((r) => r.item);
+      const hits = searcher.search(q, 40);
       if (hits.length === 0) {
         results.appendChild(empty("該当なし"));
         return;
