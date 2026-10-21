@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>路線図 — 地図に忠実なインタラクティブ路線図</title>
+    <meta name="description" content="国土数値情報の鉄道データをもとに、実際の地理座標で描いた検索できる路線図" />
+  </head>
+  <body>
+    <div id="app">
+      <aside id="sidebar" aria-label="検索と絞り込み">
+        <header class="sb-header">
+          <h1>路線図</h1>
+          <span id="region-label" class="muted"></span>
+        </header>
+        <div class="sb-search">
+          <input id="search" type="search" placeholder="路線・駅を検索（例: 銀座線、新宿）" autocomplete="off" />
+        </div>
+        <div class="sb-controls">
+          <label class="toggle"><input id="hide-others" type="checkbox" /> 選択した路線以外を隠す</label>
+          <button id="clear" type="button" class="link-btn">選択をクリア</button>
+        </div>
+        <div id="chips" class="chips" aria-live="polite"></div>
+        <details id="operator-filter" class="sb-section">
+          <summary>事業者で絞り込む <span id="operator-count" class="badge"></span></summary>
+          <div id="operator-list" class="operator-list"></div>
+        </details>
+        <div id="results" class="results" role="listbox"></div>
+        <footer class="sb-footer muted">
+          データ: <a href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N02-2024.html" target="_blank" rel="noopener">国土数値情報（鉄道データ）</a> 国土交通省 /
+          地図: <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © OpenStreetMap
+        </footer>
+      </aside>
+      <main id="map-wrap">
+        <div id="map" role="application" aria-label="地図"></div>
+        <div id="status" class="status">データを読み込み中…</div>
+        <button id="toggle-sidebar" type="button" aria-label="パネルを開閉">検索</button>
+      </main>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

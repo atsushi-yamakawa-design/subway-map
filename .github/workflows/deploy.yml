@@ -1,0 +1,77 @@
+name: Build & Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      region:
+        description: "切り出し範囲 (kanto / kansai / nagoya / all / minLng,minLat,maxLng,maxLat)"
+        default: "kanto"
+        required: false
+  schedule:
+    # 年に一度（N02 の年次更新を拾う）
+    - cron: "0 3 1 7 *"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+
+      - name: Cache N02 download
+        uses: actions/cache@v4
+        with:
+          path: data/raw/N02.zip
+          key: n02-${{ hashFiles('scripts/download-n02.ts') }}-${{ github.run_id }}
+          restore-keys: |
+            n02-${{ hashFiles('scripts/download-n02.ts') }}-
+
+      - name: Download N02 (国土数値情報 鉄道データ)
+        run: |
+          if [ -f data/raw/N02.zip ]; then
+            echo "cached zip found; re-extracting"
+            N02_URL="file://$PWD/data/raw/N02.zip" npm run data:download || npm run data:download
+          else
+            npm run data:download
+          fi
+
+      - name: Build data
+        env:
+          REGION: ${{ github.event.inputs.region || 'kanto' }}
+        run: npm run data:build
+
+      - run: npm run build
+
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

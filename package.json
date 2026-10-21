@@ -1,0 +1,28 @@
+{
+  "name": "subway-map",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p scripts/tsconfig.json",
+    "test": "vitest run",
+    "data:download": "tsx scripts/download-n02.ts",
+    "data:build": "tsx scripts/build-data.ts",
+    "data": "npm run data:download && npm run data:build"
+  },
+  "devDependencies": {
+    "@types/geojson": "^7946.0.16",
+    "@types/node": "^26.6.5",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.5"
+  },
+  "dependencies": {
+    "fuse.js": "^7.5.0",
+    "maplibre-gl": "^6.15.0"
+  }
+}
