@@ -86,12 +86,11 @@ async function boot(): Promise<void> {
 
   const sidebarApi = createSidebar(data, state, {
     onLine(id) {
-      const wasSelected = state.get().lines.has(id);
-      state.toggleLine(id);
-      if (!wasSelected) afterPanelSettled(() => rail.focusLine(id));
+      state.focusLine(id);
+      afterPanelSettled(() => rail.focusLine(id));
     },
     onStation(id) {
-      state.selectStation(id);
+      state.focusStation(id);
       afterPanelSettled(() => rail.focusStation(id));
     },
   });
@@ -103,9 +102,9 @@ async function boot(): Promise<void> {
 
   // URL に選択が入っていたら最初からそこへ寄せる
   rail.map.once("load", () => {
-    const sel = state.get();
-    if (sel.station) rail.focusStation(sel.station);
-    else if (sel.lines.size === 1) rail.focusLine([...sel.lines][0]!);
+    const f = state.get().focus;
+    if (f?.kind === "station") rail.focusStation(f.id);
+    else if (f?.kind === "line") rail.focusLine(f.id);
   });
 }
 

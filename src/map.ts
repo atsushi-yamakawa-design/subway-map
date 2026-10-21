@@ -20,8 +20,10 @@ import type { LineFeature, MapData, StationFeature } from "./types";
 /** ベースマップ。APIキー不要の OpenFreeMap Positron（淡色）。 */
 const STYLE_URL: string = import.meta.env.VITE_STYLE_URL || "https://tiles.openfreemap.org/styles/positron";
 
-const DIM_LINE = 0.12;
-const DIM_STATION = 0.15;
+// 路線は「デフォルト」と「フォーカス」の 2 状態
+const LINE_DEFAULT_OPACITY = 0.6;
+const LINE_FOCUS_WIDTH = 1.7; // デフォルト比
+const STATION_DEFAULT_OPACITY = 0.75;
 
 const SRC_LINES = "lines";
 const SRC_STATIONS = "stations";
@@ -64,18 +66,19 @@ export function createMap(container: HTMLElement, data: MapData, state: AppState
 
   // ホバー中は太くする。["zoom"] はトップレベルの interpolate の入力にしか置けないので、
   // 乗算は各ストップの出力側に入れる。
-  const hoverW: ExpressionSpecification = ["case", ["boolean", ["feature-state", "hover"], false], 1.8, 1];
-  const lineW = (z8: number, z12: number, z16: number): ExpressionSpecification => [
+  const hoverW: ExpressionSpecification = ["case", ["boolean", ["feature-state", "hover"], false], 1.5, 1];
+  const lineW = (z8: number, z12: number, z16: number, focusW: ExpressionSpecification): ExpressionSpecification => [
     "interpolate",
     ["linear"],
     ["zoom"],
     8,
-    ["*", z8, hoverW],
+    ["*", z8, hoverW, focusW],
     12,
-    ["*", z12, hoverW],
+    ["*", z12, hoverW, focusW],
     16,
-    ["*", z16, hoverW],
+    ["*", z16, hoverW, focusW],
   ];
+  const noFocusW: ExpressionSpecification = ["literal", 1];
 
   map.on("load", () => {
     map.addSource(SRC_LINES, { type: "geojson", data: data.lines, promoteId: "id" });
@@ -87,14 +90,14 @@ export function createMap(container: HTMLElement, data: MapData, state: AppState
       type: "line",
       source: SRC_LINES,
       layout: { "line-cap": "round", "line-join": "round" },
-      paint: { "line-color": "#ffffff", "line-width": lineW(2.5, 6, 13) },
+      paint: { "line-color": "#ffffff", "line-width": lineW(2.5, 6, 13, noFocusW), "line-opacity": LINE_DEFAULT_OPACITY },
     });
     map.addLayer({
       id: L_LINE,
       type: "line",
       source: SRC_LINES,
       layout: { "line-cap": "round", "line-join": "round" },
-      paint: { "line-color": ["get", "color"], "line-width": lineW(1.2, 3.2, 8) },
+      paint: { "line-color": ["get", "color"], "line-width": lineW(1.2, 3.2, 8, noFocusW), "line-opacity": LINE_DEFAULT_OPACITY },
     });
     // クリック判定用の太い透明レイヤー
     map.addLayer({
@@ -142,6 +145,8 @@ export function createMap(container: HTMLElement, data: MapData, state: AppState
         "circle-color": "#ffffff",
         "circle-stroke-color": ["case", transfer, "#333333", ["get", "color"]],
         "circle-stroke-width": ["interpolate", ["linear"], ["zoom"], 10, 1, 13, 2, 16, 3],
+        "circle-opacity": STATION_DEFAULT_OPACITY,
+        "circle-stroke-opacity": STATION_DEFAULT_OPACITY,
       },
     });
     map.addLayer({
@@ -247,48 +252,50 @@ export function createMap(container: HTMLElement, data: MapData, state: AppState
     });
   }
 
-  // ---- 選択状態をスタイルに反映 ----
+  // ---- フォーカスをスタイルに反映 ----
+  /** フォーカス中の路線 ID。駅をフォーカスしたときはその駅を通る路線 */
   function highlightedLines(sel: Selection): string[] {
-    const ids = new Set(sel.lines);
-    if (sel.station) {
-      const st = data.stationById.get(sel.station);
-      if (st) for (const l of st.properties.lines) ids.add(l);
-    }
-    return [...ids];
+    const f = sel.focus;
+    if (!f) return [];
+    if (f.kind === "line") return [f.id];
+    return data.stationById.get(f.id)?.properties.lines ?? [];
   }
 
   function applySelection(sel: Selection): void {
     if (!map.getLayer(L_LINE)) return;
     const hi = highlightedLines(sel);
     const hasHi = hi.length > 0;
-    const all: FilterSpecification = ["literal", true];
 
-    const lineIsHi: ExpressionSpecification = hasHi ? ["in", ["get", "id"], ["literal", hi]] : ["literal", true];
-    const lineFilter: FilterSpecification = all;
-    const lineOpacity: ExpressionSpecification = hasHi ? ["case", lineIsHi, 1, DIM_LINE] : ["literal", 1];
+    const lineIsHi: ExpressionSpecification = hasHi ? ["in", ["get", "id"], ["literal", hi]] : ["literal", false];
+    const focusW: ExpressionSpecification = ["case", lineIsHi, LINE_FOCUS_WIDTH, 1];
+    const lineOpacity: ExpressionSpecification = ["case", lineIsHi, 1, LINE_DEFAULT_OPACITY];
     const sortKey: ExpressionSpecification = ["case", lineIsHi, 1, 0];
 
-    for (const id of [L_CASING, L_LINE, L_HIT]) map.setFilter(id, lineFilter);
+    map.setPaintProperty(L_CASING, "line-width", lineW(2.5, 6, 13, focusW));
+    map.setPaintProperty(L_LINE, "line-width", lineW(1.2, 3.2, 8, focusW));
     map.setPaintProperty(L_CASING, "line-opacity", lineOpacity);
     map.setPaintProperty(L_LINE, "line-opacity", lineOpacity);
     map.setLayoutProperty(L_CASING, "line-sort-key", sortKey);
     map.setLayoutProperty(L_LINE, "line-sort-key", sortKey);
-    map.setFilter(L_LABEL, hasHi ? lineIsHi : all);
+    // 路線名ラベルは、フォーカス中はその路線だけ。太い線の上に乗るので白文字＋路線色の縁取りにする
+    map.setFilter(L_LABEL, hasHi ? lineIsHi : ["literal", true]);
+    map.setPaintProperty(L_LABEL, "text-color", ["case", lineIsHi, "#ffffff", ["get", "color"]]);
+    map.setPaintProperty(L_LABEL, "text-halo-color", ["case", lineIsHi, ["get", "color"], "#ffffff"]);
 
     const stIsHi: ExpressionSpecification = hasHi
       ? ["any", ...hi.map((id): ExpressionSpecification => ["in", id, ["get", "lines"]])]
-      : ["literal", true];
-    map.setFilter(L_STATION, all);
-    map.setPaintProperty(L_STATION, "circle-opacity", hasHi ? ["case", stIsHi, 1, DIM_STATION] : 1);
-    map.setPaintProperty(L_STATION, "circle-stroke-opacity", hasHi ? ["case", stIsHi, 1, DIM_STATION] : 1);
+      : ["literal", false];
+    map.setPaintProperty(L_STATION, "circle-opacity", ["case", stIsHi, 1, STATION_DEFAULT_OPACITY]);
+    map.setPaintProperty(L_STATION, "circle-stroke-opacity", ["case", stIsHi, 1, STATION_DEFAULT_OPACITY]);
 
-    // ラベル: 何か選んでいるときはその路線の全駅、通常時は 13 未満で乗換駅のみ
+    // 駅名ラベル: フォーカス中はその路線の全駅、通常時は 13 未満で乗換駅のみ
     const labelFilter: FilterSpecification = hasHi
       ? stIsHi
       : ["any", [">=", ["zoom"], 13], [">", ["get", "lineCount"], 1]];
     map.setFilter(L_STATION_LABEL, labelFilter);
 
-    map.setFilter(L_STATION_SELECTED, ["==", ["get", "id"], sel.station ?? ""]);
+    const stationId = sel.focus?.kind === "station" ? sel.focus.id : "";
+    map.setFilter(L_STATION_SELECTED, ["==", ["get", "id"], stationId]);
   }
 
   state.subscribe((sel) => applySelection(sel));
@@ -316,19 +323,17 @@ export function createMap(container: HTMLElement, data: MapData, state: AppState
       if (station) {
         const id = String(station.properties["id"]);
         openStationPopup(id);
-        state.selectStation(id);
+        state.focusStation(id);
         return;
       }
       // 路線: タップ位置に重なっている路線を全部吹き出しに出し、先頭を選択状態にする
       const lineIds = [...new Set(feats.filter((f) => f.layer.id === L_HIT).map((f) => String(f.properties["id"])))];
       if (lineIds.length > 0) {
-        const first = lineIds[0]!;
-        if (!state.get().lines.has(first)) state.toggleLine(first);
+        state.focusLine(lineIds[0]!);
         openLinePopup(e.lngLat, lineIds);
         return;
       }
       popup?.remove();
-      if (state.get().station) state.selectStation(null);
     });
   }
 
@@ -346,7 +351,7 @@ export function createMap(container: HTMLElement, data: MapData, state: AppState
     name.children[0]!.textContent = line.properties.operatorShort;
     name.append(line.properties.shortName);
     btn.addEventListener("click", () => {
-      if (!state.get().lines.has(lid)) state.toggleLine(lid);
+      state.focusLine(lid);
       focusLine(lid);
     });
     return btn;

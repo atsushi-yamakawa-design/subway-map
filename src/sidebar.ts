@@ -93,24 +93,16 @@ export function createSidebar(data: MapData, state: AppState, handlers: SidebarH
 
   function renderChips(sel: Selection): void {
     chips.replaceChildren();
-    for (const id of sel.lines) {
-      const line = data.lineById.get(id);
-      if (!line) continue;
-      chips.appendChild(
-        chip(line.properties.color, line.properties.shortName, () => state.removeLine(id), line.properties.operatorShort),
-      );
-    }
-    if (sel.station) {
-      const st = data.stationById.get(sel.station);
-      if (st) chips.appendChild(chip(null, `${st.properties.name}駅`, () => state.selectStation(null)));
-    }
-    if (chips.childElementCount > 0) {
-      const clear = document.createElement("button");
-      clear.type = "button";
-      clear.className = "link-btn";
-      clear.textContent = "クリア";
-      clear.addEventListener("click", () => state.clear());
-      chips.appendChild(clear);
+    const f = sel.focus;
+    if (!f) return;
+    if (f.kind === "line") {
+      const line = data.lineById.get(f.id);
+      if (line) {
+        chips.appendChild(chip(line.properties.color, line.properties.shortName, () => state.clear(), line.properties.operatorShort));
+      }
+    } else {
+      const st = data.stationById.get(f.id);
+      if (st) chips.appendChild(chip(null, `${st.properties.name}駅`, () => state.clear()));
     }
   }
 
@@ -184,7 +176,7 @@ export function createSidebar(data: MapData, state: AppState, handlers: SidebarH
     btn.type = "button";
     btn.className = "row";
     btn.setAttribute("role", "option");
-    const selected = d.kind === "line" ? sel.lines.has(d.id) : sel.station === d.id;
+    const selected = sel.focus?.kind === d.kind && sel.focus.id === d.id;
     if (selected) btn.classList.add("selected");
     const sw = document.createElement("span");
     sw.className = "swatch" + (d.kind === "station" ? " station" : "");

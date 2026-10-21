@@ -1,23 +1,24 @@
 /**
- * 選択状態。URL のハッシュと同期して共有できるようにする。
- *   #l=<lineId>,<lineId>&s=<stationId>
+ * フォーカス状態。常に 1 つだけ（路線か駅）。URL のハッシュと同期して共有できる。
+ *   #l=<lineId>  または  #s=<stationId>
  */
+export type Focus = { kind: "line"; id: string } | { kind: "station"; id: string };
+
 export interface Selection {
-  lines: Set<string>;
-  station: string | null;
+  focus: Focus | null;
 }
 
-type Listener = (s: Selection, changed: Set<keyof Selection>) => void;
+type Listener = (s: Selection) => void;
 
 export class AppState {
-  private sel: Selection = { lines: new Set(), station: null };
+  private sel: Selection = { focus: null };
   private listeners: Listener[] = [];
 
   constructor() {
     this.readHash();
     window.addEventListener("hashchange", () => {
       this.readHash();
-      this.emit(new Set(["lines", "station"]));
+      this.emit();
     });
   }
 
@@ -29,58 +30,47 @@ export class AppState {
     this.listeners.push(fn);
   }
 
-  toggleLine(id: string): void {
-    if (this.sel.lines.has(id)) this.sel.lines.delete(id);
-    else this.sel.lines.add(id);
-    this.commit(["lines"]);
+  focusLine(id: string): void {
+    this.sel = { focus: { kind: "line", id } };
+    this.commit();
   }
 
-  selectOnlyLine(id: string): void {
-    this.sel.lines = new Set([id]);
-    this.sel.station = null;
-    this.commit(["lines", "station"]);
-  }
-
-  removeLine(id: string): void {
-    this.sel.lines.delete(id);
-    this.commit(["lines"]);
-  }
-
-  selectStation(id: string | null): void {
-    this.sel.station = id;
-    this.commit(["station"]);
+  focusStation(id: string): void {
+    this.sel = { focus: { kind: "station", id } };
+    this.commit();
   }
 
   clear(): void {
-    this.sel.lines.clear();
-    this.sel.station = null;
-    this.commit(["lines", "station"]);
+    this.sel = { focus: null };
+    this.commit();
   }
 
-  private commit(keys: Array<keyof Selection>): void {
+  isFocused(kind: Focus["kind"], id: string): boolean {
+    return this.sel.focus?.kind === kind && this.sel.focus.id === id;
+  }
+
+  private commit(): void {
     this.writeHash();
-    this.emit(new Set(keys));
+    this.emit();
   }
 
-  private emit(changed: Set<keyof Selection>): void {
-    for (const fn of this.listeners) fn(this.sel, changed);
+  private emit(): void {
+    for (const fn of this.listeners) fn(this.sel);
   }
 
   private readHash(): void {
     const params = new URLSearchParams(location.hash.replace(/^#/, ""));
-    const list = (k: string) => (params.get(k) ?? "").split(",").filter(Boolean);
-    this.sel = {
-      lines: new Set(list("l")),
-      station: params.get("s") || null,
-    };
+    const l = params.get("l");
+    const s = params.get("s");
+    this.sel = { focus: l ? { kind: "line", id: l } : s ? { kind: "station", id: s } : null };
   }
 
   private writeHash(): void {
     const p = new URLSearchParams();
-    if (this.sel.lines.size) p.set("l", [...this.sel.lines].join(","));
-    if (this.sel.station) p.set("s", this.sel.station);
+    const f = this.sel.focus;
+    if (f?.kind === "line") p.set("l", f.id);
+    if (f?.kind === "station") p.set("s", f.id);
     const hash = p.toString();
-    const url = hash ? `#${hash}` : location.pathname + location.search;
-    history.replaceState(null, "", url);
+    history.replaceState(null, "", hash ? `#${hash}` : location.pathname + location.search);
   }
 }
