@@ -44,13 +44,8 @@ jobs:
             n02-${{ hashFiles('scripts/download-n02.ts') }}-
 
       - name: Download N02 (国土数値情報 鉄道データ)
-        run: |
-          if [ -f data/raw/N02.zip ]; then
-            echo "cached zip found; re-extracting"
-            N02_URL="file://$PWD/data/raw/N02.zip" npm run data:download || npm run data:download
-          else
-            npm run data:download
-          fi
+        # data/raw/N02.zip がキャッシュから復元されていれば再利用する
+        run: npm run data:download
 
       - name: Build data
         env:

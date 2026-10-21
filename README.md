@@ -30,7 +30,7 @@ REGION=kansai npm run data:build   # kanto | kansai | nagoya | all | minLng,minL
 ```
 
 ダウンロードがうまくいかないときは配布ページから zip を手で落として `data/raw/N02.zip` に置き、
-`N02_URL=file://$PWD/data/raw/N02.zip npm run data:download` を実行する。
+もう一度 `npm run data:download` を実行する（zip があれば再利用される）。
 
 ```sh
 npm run typecheck

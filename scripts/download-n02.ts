@@ -3,6 +3,9 @@
  *
  *   npm run data:download            # 最新年度から順に試す
  *   N02_URL=https://... npm run data:download   # URL を直接指定
+ *   N02_FORCE=1 npm run data:download           # data/raw/N02.zip があっても再取得
+ *
+ * data/raw/N02.zip が既にあれば（手で置いた場合や CI のキャッシュ）ダウンロードは飛ばす。
  *
  * 配布元: https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N02-2024.html
  * 利用には国土数値情報の利用規約が適用される。
@@ -60,10 +63,18 @@ async function findFiles(dir: string, pattern: RegExp, out: string[] = []): Prom
   return out;
 }
 
+async function exists(path: string): Promise<boolean> {
+  return stat(path).then((s) => s.size > 1e6, () => false);
+}
+
 async function main() {
   await mkdir(RAW_DIR, { recursive: true });
   let ok = false;
-  for (const url of candidateUrls()) {
+  if (!process.env.N02_FORCE && (await exists(ZIP_PATH))) {
+    console.log(`${ZIP_PATH} を再利用（再取得するなら N02_FORCE=1）`);
+    ok = true;
+  }
+  for (const url of ok ? [] : candidateUrls()) {
     try {
       if (await download(url)) {
         ok = true;
@@ -74,7 +85,7 @@ async function main() {
     }
   }
   if (!ok) {
-    console.error("N02 のダウンロードに失敗。ブラウザで配布ページから zip を落として N02_URL=file パスではなく data/raw/N02.zip に置き、再実行してください。");
+    console.error("N02 のダウンロードに失敗。ブラウザで配布ページから zip を落として data/raw/N02.zip に置き、再実行してください。");
     process.exit(1);
   }
 
