@@ -81,6 +81,7 @@ export function createMap(container: HTMLElement, data: MapData, state: AppState
   const noFocusW: ExpressionSpecification = ["literal", 1];
 
   map.on("load", () => {
+    tintBasemap();
     map.addSource(SRC_LINES, { type: "geojson", data: data.lines, promoteId: "id" });
     map.addSource(SRC_STATIONS, { type: "geojson", data: data.stations, promoteId: "id" });
 
@@ -187,6 +188,36 @@ export function createMap(container: HTMLElement, data: MapData, state: AppState
     const attrib = container.querySelector<HTMLDetailsElement>("details.maplibregl-ctrl-attrib");
     if (attrib) attrib.open = false;
   });
+
+  // ---- ベースマップの色味 ----
+  // Positron は無彩色寄りなので、背景・水・緑地・建物だけ暖色寄りに差し替えてポップにする。
+  // レイヤー名はスタイル側の都合で変わりうるので、id のパターンと種類で当てる。
+  function tintBasemap(): void {
+    const rules: Array<{ test: RegExp; types: string[]; prop: string; value: string }> = [
+      { test: /^background$|background/, types: ["background"], prop: "background-color", value: "#fbf3df" },
+      { test: /water/, types: ["fill"], prop: "fill-color", value: "#bfe2f4" },
+      { test: /water/, types: ["line"], prop: "line-color", value: "#a6d3ea" },
+      { test: /park|grass|wood|green|forest|cemetery|golf|pitch|garden|nature/, types: ["fill"], prop: "fill-color", value: "#d3eab8" },
+      { test: /building/, types: ["fill"], prop: "fill-color", value: "#f2e4c4" },
+      { test: /building/, types: ["fill"], prop: "fill-outline-color", value: "#e6d4ad" },
+      { test: /residential|landuse|land_/, types: ["fill"], prop: "fill-color", value: "#f7ecd3" },
+    ];
+    for (const layer of map.getStyle().layers) {
+      for (const r of rules) {
+        if (!r.types.includes(layer.type) || !r.test.test(layer.id)) continue;
+        try {
+          // プロパティ名は動的なので型の網をくぐる
+          (map as unknown as { setPaintProperty(id: string, prop: string, value: unknown): void }).setPaintProperty(
+            layer.id,
+            r.prop,
+            r.value,
+          );
+        } catch {
+          /* そのプロパティを持たないレイヤーは無視 */
+        }
+      }
+    }
+  }
 
   // ---- 拡大時のスポット名（ベースマップの OSM POI レイヤーを流用）----
   // Positron スタイルは POI を描かないので、同じベクタータイルの poi レイヤーから

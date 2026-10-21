@@ -95,10 +95,12 @@ async function boot(): Promise<void> {
     },
   });
 
-  document.getElementById("reset")!.addEventListener("click", () => {
+  const reset = () => {
     sidebarApi.clearQuery();
     rail.resetView();
-  });
+  };
+  document.getElementById("reset")!.addEventListener("click", reset);
+  document.getElementById("brand")!.addEventListener("click", reset);
 
   // URL に選択が入っていたら最初からそこへ寄せる
   rail.map.once("load", () => {
