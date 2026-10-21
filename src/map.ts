@@ -299,13 +299,24 @@ export function createMap(container: HTMLElement, data: MapData, state: AppState
   function focusLine(id: string): void {
     const f: LineFeature | undefined = data.lineById.get(id);
     if (!f) return;
-    map.fitBounds(f.properties.bbox as LngLatBoundsLike, { padding: 60, duration: 700, maxZoom: 13 });
+    // 上のワードマーク・右下の FAB・左下のボタンに被らない余白を取る
+    map.fitBounds(f.properties.bbox as LngLatBoundsLike, {
+      padding: { top: 70, bottom: 90, left: 48, right: 48 },
+      duration: 700,
+      maxZoom: 14,
+    });
   }
 
   function focusStation(id: string): void {
     const f: StationFeature | undefined = data.stationById.get(id);
     if (!f) return;
-    map.flyTo({ center: f.geometry.coordinates as [number, number], zoom: Math.max(map.getZoom(), 14), duration: 700 });
+    // ポップアップが上に出るぶん、駅を少し下寄りに置く
+    map.flyTo({
+      center: f.geometry.coordinates as [number, number],
+      zoom: Math.max(map.getZoom(), 14),
+      offset: [0, 40],
+      duration: 700,
+    });
     openStationPopup(id);
   }
 

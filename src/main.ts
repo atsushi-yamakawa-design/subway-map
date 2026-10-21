@@ -61,16 +61,38 @@ async function boot(): Promise<void> {
   const state = new AppState();
   const rail = createMap(document.getElementById("map")!, data, state);
 
+  // スマホでは項目を選ぶとパネルを閉じる。地図はパネルが閉じ終わってから広い面積で位置合わせする。
+  const isMobile = () => window.innerWidth <= 720;
+  function afterPanelSettled(fn: () => void): void {
+    if (!isMobile() || sidebar.classList.contains("collapsed")) {
+      fn();
+      return;
+    }
+    setSidebarOpen(false);
+    let done = false;
+    const run = () => {
+      if (done) return;
+      done = true;
+      sidebar.removeEventListener("transitionend", onEnd);
+      rail.map.resize();
+      fn();
+    };
+    const onEnd = (e: TransitionEvent) => {
+      if (e.target === sidebar) run();
+    };
+    sidebar.addEventListener("transitionend", onEnd);
+    window.setTimeout(run, 400); // transitionend が来ない環境（reduced motion など）の保険
+  }
+
   const sidebarApi = createSidebar(data, state, {
     onLine(id) {
       const wasSelected = state.get().lines.has(id);
       state.toggleLine(id);
-      if (!wasSelected) rail.focusLine(id);
+      if (!wasSelected) afterPanelSettled(() => rail.focusLine(id));
     },
     onStation(id) {
       state.selectStation(id);
-      rail.focusStation(id);
-      if (window.innerWidth <= 720) setSidebarOpen(false);
+      afterPanelSettled(() => rail.focusStation(id));
     },
   });
 
