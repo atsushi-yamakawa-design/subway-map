@@ -32,6 +32,21 @@ try {
   /* noop */
 }
 
+// スマホでソフトキーボードが出ると visualViewport だけ縮む。
+// レイアウト全体をその高さに合わせることで、下パネルの入力欄がキーボードの上に乗る。
+const vv = window.visualViewport;
+if (vv) {
+  const sync = () => {
+    // ピンチズーム中（scale≠1）はキーボードではないので除外
+    const keyboardOpen = vv.scale === 1 && vv.height < window.innerHeight * 0.8;
+    document.documentElement.style.setProperty("--vvh", keyboardOpen ? `${Math.round(vv.height)}px` : "");
+    document.documentElement.classList.toggle("keyboard", keyboardOpen);
+    if (keyboardOpen) window.scrollTo(0, 0);
+  };
+  vv.addEventListener("resize", sync);
+  vv.addEventListener("scroll", sync);
+}
+
 async function boot(): Promise<void> {
   let data;
   try {

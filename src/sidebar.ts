@@ -21,7 +21,6 @@ export function createSidebar(data: MapData, state: AppState, handlers: SidebarH
   const input = $<HTMLInputElement>("search");
   const results = $<HTMLDivElement>("results");
   const chips = $<HTMLDivElement>("chips");
-  const segButtons = [...document.querySelectorAll<HTMLButtonElement>(".seg-btn")];
   const regionLabel = $<HTMLSpanElement>("region-label");
 
   if (data.meta) regionLabel.textContent = data.meta.region;
@@ -62,17 +61,6 @@ export function createSidebar(data: MapData, state: AppState, handlers: SidebarH
     ignoreLocation: true,
     minMatchCharLength: 1,
   });
-
-  // ---- 種類の絞り込み（UI だけの状態。URL には入れない）----
-  type Kind = "all" | "line" | "station";
-  let kind: Kind = "all";
-  for (const btn of segButtons) {
-    btn.addEventListener("click", () => {
-      kind = (btn.dataset["kind"] as Kind) ?? "all";
-      for (const b of segButtons) b.setAttribute("aria-checked", String(b === btn));
-      renderResults(state.get());
-    });
-  }
 
   // ---- 描画 ----
   function render(sel: Selection): void {
@@ -123,21 +111,13 @@ export function createSidebar(data: MapData, state: AppState, handlers: SidebarH
   function renderResults(sel: Selection): void {
     const q = input.value.trim();
     results.replaceChildren();
-    const matchesKind = (d: Doc) => kind === "all" || d.kind === kind;
     if (q) {
-      const hits = fuse.search(q, { limit: 60 }).map((r) => r.item).filter(matchesKind).slice(0, 40);
+      const hits = fuse.search(q, { limit: 40 }).map((r) => r.item);
       if (hits.length === 0) {
         results.appendChild(empty("該当なし"));
         return;
       }
       for (const d of hits) results.appendChild(row(d, sel));
-      return;
-    }
-    // クエリ無しで「駅」: 駅を五十音順ではなく名前順に一覧（かなが無いので文字コード順）
-    if (kind === "station") {
-      const frag = document.createDocumentFragment();
-      for (const d of docs) if (d.kind === "station") frag.appendChild(row(d, sel));
-      results.appendChild(frag);
       return;
     }
     // クエリ無し: 事業者ごとに路線一覧
@@ -186,7 +166,7 @@ export function createSidebar(data: MapData, state: AppState, handlers: SidebarH
     sub.textContent = d.sub;
     main.append(title, sub);
     const kind = document.createElement("span");
-    kind.className = "kind";
+    kind.className = `kind ${d.kind}`;
     kind.textContent = d.kind === "line" ? "路線" : "駅";
     btn.append(sw, main, kind);
     btn.addEventListener("click", () => {

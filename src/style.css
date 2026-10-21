@@ -6,7 +6,7 @@
   --hover: #f3f4f6;
   --accent: #2563eb;
   --sidebar-w: 340px;
-  --sidebar-h: 48vh;
+  --sidebar-h: 48%;
   --ease: cubic-bezier(0.2, 0, 0, 1);
   --dur: 280ms;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Hiragino Sans", "Noto Sans JP", sans-serif;
@@ -17,10 +17,11 @@
   :root { --dur: 0ms; }
 }
 * { box-sizing: border-box; }
-html, body, #app { height: 100%; margin: 0; }
+html, body { height: 100%; margin: 0; overflow: hidden; }
 body { background: var(--bg); }
 
-#app { display: flex; }
+/* --vvh はスマホでキーボードが出たとき main.ts が visualViewport の高さを入れる */
+#app { display: flex; height: var(--vvh, 100%); }
 
 /* ---- サイドバー（開閉はスライド）---- */
 #sidebar {
@@ -46,10 +47,8 @@ body { background: var(--bg); }
 #map-wrap { position: relative; flex: 1 1 auto; min-width: 0; }
 #map { position: absolute; inset: 0; }
 
-.sb-header { display: flex; align-items: baseline; gap: 10px; padding: 14px 16px 6px; }
-.sb-header h1 { font-size: 18px; margin: 0; }
 .muted { color: var(--muted); font-size: 12px; }
-.sb-search { padding: 6px 16px; }
+.sb-search { padding: 10px 12px 8px; }
 #search {
   width: 100%;
   padding: 9px 12px;
@@ -60,20 +59,10 @@ body { background: var(--bg); }
   transition: border-color 150ms, box-shadow 150ms;
 }
 #search:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); }
-/* 種類の切り替え（すべて / 路線 / 駅） */
-.seg { display: flex; gap: 4px; padding: 4px 16px 8px; }
-.seg-btn {
-  flex: 1 1 0; padding: 6px 0; border-radius: 999px;
-  border: 1px solid var(--border); background: #fff; color: var(--muted);
-  font: inherit; font-size: 13px; cursor: pointer;
-  transition: background-color 150ms, color 150ms, border-color 150ms;
-}
-.seg-btn:hover { background: var(--hover); }
-.seg-btn[aria-checked="true"] { background: var(--fg); color: #fff; border-color: var(--fg); }
 .link-btn { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 13px; padding: 4px; }
 .link-btn:hover { text-decoration: underline; }
 
-.chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 0 16px 8px; }
+.chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 0 12px 8px; }
 .chips:empty { display: none; }
 .chip {
   display: inline-flex; align-items: center; gap: 6px;
@@ -102,12 +91,14 @@ body { background: var(--bg); }
 }
 .row:hover, .row:focus-visible { background: var(--hover); outline: none; }
 .row.selected { background: #eef2ff; }
-.row .swatch { width: 14px; height: 14px; border-radius: 3px; flex: 0 0 auto; border: 1px solid rgba(0,0,0,0.15); }
-.row .swatch.station { border-radius: 50%; background: #fff; border-width: 3px; }
+.row .swatch { width: 22px; height: 6px; border-radius: 3px; flex: 0 0 auto; }
+.row .swatch.station { width: 14px; height: 14px; border-radius: 50%; background: #fff; border: 3px solid #333; margin: 0 4px; }
 .row .main { display: flex; flex-direction: column; min-width: 0; }
 .row .title { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .row .sub { color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.row .kind { margin-left: auto; color: var(--muted); font-size: 11px; border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; flex: 0 0 auto; }
+.row .kind { margin-left: auto; font-size: 11px; border-radius: 4px; padding: 2px 6px; flex: 0 0 auto; font-weight: 600; }
+.row .kind.line { background: #eef2ff; color: #3730a3; }
+.row .kind.station { background: #ecfdf5; color: #065f46; }
 .empty { padding: 24px 16px; color: var(--muted); text-align: center; }
 
 .sb-footer { padding: 8px 16px; border-top: 1px solid var(--border); line-height: 1.5; }
@@ -120,6 +111,20 @@ body { background: var(--bg); }
 }
 .status.hidden { display: none; }
 .status.error { color: #b91c1c; }
+
+/* ---- 左上のワードマーク ---- */
+.brand {
+  position: absolute; top: 12px; left: 12px; z-index: 5; margin: 0;
+  display: inline-flex; align-items: baseline; gap: 8px;
+  padding: 6px 12px; border-radius: 999px;
+  background: rgba(255,255,255,0.92); backdrop-filter: blur(6px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  font-family: "Dela Gothic One", "Hiragino Sans", "Noto Sans JP", sans-serif;
+  font-size: 15px; font-weight: 400; letter-spacing: 0.04em; color: var(--fg);
+  pointer-events: none;
+}
+.brand-sub { font-family: inherit; font-size: 10px; color: var(--muted); letter-spacing: 0.02em; }
+.brand-sub:empty { display: none; }
 
 /* ---- 検索 FAB（右下）---- */
 .fab {
@@ -171,4 +176,5 @@ body { background: var(--bg); }
   .sb-inner { width: 100%; }
   #sidebar.collapsed .sb-inner { transform: translateY(24px); }
   .fab { right: 12px; bottom: 12px; }
+  html.keyboard #sidebar:not(.collapsed) { height: 72%; }
 }
