@@ -22,8 +22,10 @@ const STYLE_URL: string = import.meta.env.VITE_STYLE_URL || "https://tiles.openf
 
 // 路線は「デフォルト」と「フォーカス」の 2 状態
 const LINE_DEFAULT_OPACITY = 0.6;
+const LINE_OTHERS_OPACITY = 0.42; // 何かをフォーカス中の、それ以外の路線
 const LINE_FOCUS_WIDTH = 1.7; // デフォルト比
 const STATION_DEFAULT_OPACITY = 0.75;
+const STATION_OTHERS_OPACITY = 0.5;
 
 const SRC_LINES = "lines";
 const SRC_STATIONS = "stations";
@@ -299,7 +301,8 @@ export function createMap(container: HTMLElement, data: MapData, state: AppState
 
     const lineIsHi: ExpressionSpecification = hasHi ? ["in", ["get", "id"], ["literal", hi]] : ["literal", false];
     const focusW: ExpressionSpecification = ["case", lineIsHi, LINE_FOCUS_WIDTH, 1];
-    const lineOpacity: ExpressionSpecification = ["case", lineIsHi, 1, LINE_DEFAULT_OPACITY];
+    // フォーカス中は、それ以外をデフォルトより少しだけ薄くして対象を浮かせる
+    const lineOpacity: ExpressionSpecification = ["case", lineIsHi, 1, hasHi ? LINE_OTHERS_OPACITY : LINE_DEFAULT_OPACITY];
     const sortKey: ExpressionSpecification = ["case", lineIsHi, 1, 0];
 
     map.setPaintProperty(L_CASING, "line-width", lineW(2.5, 6, 13, focusW));
@@ -316,8 +319,9 @@ export function createMap(container: HTMLElement, data: MapData, state: AppState
     const stIsHi: ExpressionSpecification = hasHi
       ? ["any", ...hi.map((id): ExpressionSpecification => ["in", id, ["get", "lines"]])]
       : ["literal", false];
-    map.setPaintProperty(L_STATION, "circle-opacity", ["case", stIsHi, 1, STATION_DEFAULT_OPACITY]);
-    map.setPaintProperty(L_STATION, "circle-stroke-opacity", ["case", stIsHi, 1, STATION_DEFAULT_OPACITY]);
+    const stOpacity: ExpressionSpecification = ["case", stIsHi, 1, hasHi ? STATION_OTHERS_OPACITY : STATION_DEFAULT_OPACITY];
+    map.setPaintProperty(L_STATION, "circle-opacity", stOpacity);
+    map.setPaintProperty(L_STATION, "circle-stroke-opacity", stOpacity);
 
     // 駅名ラベル: フォーカス中はその路線の全駅、通常時は 13 未満で乗換駅のみ
     const labelFilter: FilterSpecification = hasHi
