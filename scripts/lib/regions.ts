@@ -9,7 +9,7 @@ export const REGIONS: Record<string, { label: string; bbox?: BBox }> = {
 };
 
 export function resolveRegion(value: string | undefined): { label: string; bbox?: BBox } {
-  const v = (value ?? "kanto").trim();
+  const v = (value ?? "all").trim();
   if (REGIONS[v]) return REGIONS[v]!;
   const parts = v.split(",").map(Number);
   if (parts.length === 4 && parts.every((n) => Number.isFinite(n))) {

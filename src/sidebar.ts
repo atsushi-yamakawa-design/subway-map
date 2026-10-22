@@ -26,9 +26,6 @@ export function createSidebar(data: MapData, state: AppState, handlers: SidebarH
   const input = $<HTMLInputElement>("search");
   const results = $<HTMLDivElement>("results");
   const chips = $<HTMLDivElement>("chips");
-  const regionLabel = $<HTMLSpanElement>("region-label");
-
-  if (data.meta) regionLabel.textContent = data.meta.region;
 
   // ---- 検索インデックス ----
   const docs: Doc[] = [];

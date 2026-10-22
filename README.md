@@ -19,14 +19,14 @@
 
 ```sh
 npm ci
-npm run data        # N02 をダウンロードして public/data/ を生成（REGION=kanto がデフォルト）
+npm run data        # N02 をダウンロードして public/data/ を生成（REGION=all がデフォルト）
 npm run dev
 ```
 
 `REGION` で切り出し範囲を変えられる。
 
 ```sh
-REGION=kansai npm run data:build   # kanto | kansai | nagoya | all | minLng,minLat,maxLng,maxLat
+REGION=kanto npm run data:build    # all | kanto | kansai | nagoya | minLng,minLat,maxLng,maxLat
 ```
 
 ダウンロードがうまくいかないときは配布ページから zip を手で落として `data/raw/N02.zip` に置き、
@@ -41,7 +41,7 @@ npm run build
 ## デプロイ
 
 `main` への push で GitHub Actions が N02 をダウンロードし、データ生成・ビルド・GitHub Pages への配信まで行う。
-`workflow_dispatch` から `region` を指定して全国版などを作り直すこともできる。
+`workflow_dispatch` から `region` を指定して首都圏だけの版などを作り直すこともできる。
 
 初回だけ、リポジトリの Settings → Pages → Build and deployment → Source を **GitHub Actions** にしておく必要がある
 （Actions のトークンでは Pages サイトを作成できないため）。

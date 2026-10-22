@@ -163,8 +163,6 @@ body { background: var(--page); }
   background: linear-gradient(90deg, #1d4ed8 0%, #2f8cff 22%, #14a37f 48%, #e69500 74%, #e0393e 100%);
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
-.brand-sub { font-family: inherit; font-size: 10px; color: var(--muted); letter-spacing: 0.02em; }
-.brand-sub:empty { display: none; }
 
 /* ---- 検索 FAB（右下）---- */
 .fab {

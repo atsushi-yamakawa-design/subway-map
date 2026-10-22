@@ -6,8 +6,8 @@ on:
   workflow_dispatch:
     inputs:
       region:
-        description: "切り出し範囲 (kanto / kansai / nagoya / all / minLng,minLat,maxLng,maxLat)"
-        default: "kanto"
+        description: "切り出し範囲 (all / kanto / kansai / nagoya / minLng,minLat,maxLng,maxLat)"
+        default: "all"
         required: false
   schedule:
     # 年に一度（N02 の年次更新を拾う）
@@ -49,7 +49,9 @@ jobs:
 
       - name: Build data
         env:
-          REGION: ${{ github.event.inputs.region || 'kanto' }}
+          REGION: ${{ github.event.inputs.region || 'all' }}
+          # 全国分はサイズが効くので、首都圏版より少しだけ強めに簡略化（約 15m）
+          SIMPLIFY_TOLERANCE: "0.00015"
         run: npm run data:build
 
       - run: npm run build

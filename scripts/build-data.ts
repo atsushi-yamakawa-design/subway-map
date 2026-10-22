@@ -4,7 +4,7 @@
  *   REGION=kanto npm run data:build          # kanto | kansai | nagoya | all | minLng,minLat,maxLng,maxLat
  *   SIMPLIFY_TOLERANCE=0.0001 npm run data:build
  */
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { buildData, type InFC } from "./lib/transform.js";
 import { resolveRegion } from "./lib/regions.js";
@@ -44,6 +44,10 @@ async function main() {
   console.log(
     `sections ${s.sectionsKept}/${s.sectionsIn}  lines ${s.lines} (colored ${s.colored})  stations ${s.stations}`,
   );
+  for (const name of ["lines.geojson", "stations.geojson"]) {
+    const size = (await stat(join(OUT_DIR, name))).size;
+    console.log(`  ${name}: ${(size / 1e6).toFixed(2)} MB`);
+  }
   for (const f of result.lines.features) {
     const p = f.properties;
     console.log(`  ${p.color}  ${p.operatorShort.padEnd(10)} ${p.name}  (${p.stationCount}駅)`);
