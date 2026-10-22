@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { buildData, lineId, type InFC } from "../scripts/lib/transform.js";
 import { simplifyLine, lineMidpoint } from "../scripts/lib/geo.js";
 import { lookupColor } from "../scripts/lib/colors.js";
-import { shortLineName } from "../scripts/lib/names.js";
+import { displayName, shortLineName } from "../scripts/lib/names.js";
 
 // 合成フィクスチャ。実データではなく、変換ロジックの確認用。
 function section(operator: string, line: string, coords: number[][]) {
@@ -121,6 +121,15 @@ describe("helpers", () => {
     expect(lookupColor("京都市", "東西線")).toBe("#DE4A31");
     expect(lookupColor("札幌市", "東西線")).toBe("#EC6C00");
     expect(lookupColor("謎の鉄道", "謎線")).toBeUndefined();
+  });
+  it("displayName は俗称と前置きを組み立てる", () => {
+    expect(displayName("東武鉄道", "野田線")).toEqual({ shortName: "アーバンパークライン", prefix: "東武鉄道" });
+    expect(displayName("横浜市", "4号線")).toEqual({ shortName: "グリーンライン", prefix: "横浜市営" });
+    expect(displayName("東京地下鉄", "3号線銀座線")).toEqual({ shortName: "銀座線", prefix: "東京メトロ" });
+    // 路線名が事業者名で始まる／同じなら前置きしない
+    expect(displayName("相模鉄道", "相鉄本線")).toEqual({ shortName: "相鉄本線", prefix: "" });
+    expect(displayName("ゆりかもめ", "東京臨海新交通臨海線")).toEqual({ shortName: "ゆりかもめ", prefix: "" });
+    expect(displayName("東京モノレール", "東京モノレール羽田空港線")).toEqual({ shortName: "東京モノレール羽田空港線", prefix: "" });
   });
   it("shortLineName は号線接頭辞だけ落とす", () => {
     expect(shortLineName("4号線丸ノ内線")).toBe("丸ノ内線");

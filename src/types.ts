@@ -6,6 +6,7 @@ export interface LineProps {
   id: string;
   name: string;
   shortName: string;
+  prefix: string;
   operator: string;
   operatorShort: string;
   operatorType: string;

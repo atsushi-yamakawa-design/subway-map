@@ -379,7 +379,7 @@ export function createMap(container: HTMLElement, data: MapData, state: AppState
     btn.innerHTML = `<span class="dot"></span><span class="name"><span class="op-prefix"></span></span>`;
     (btn.children[0] as HTMLElement).style.background = line.properties.color;
     const name = btn.children[1]!;
-    name.children[0]!.textContent = line.properties.operatorShort;
+    name.children[0]!.textContent = line.properties.prefix;
     name.append(line.properties.shortName);
     btn.addEventListener("click", () => {
       state.focusLine(lid);

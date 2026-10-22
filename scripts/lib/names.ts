@@ -18,6 +18,16 @@ const OPERATOR_SHORT: Record<string, string> = {
   福岡市: "福岡市営",
   東京急行電鉄: "東急",
   京浜急行電鉄: "京急",
+  相模鉄道: "相鉄",
+  首都圏新都市鉄道: "つくばエクスプレス",
+  東京臨海高速鉄道: "りんかい線",
+  横浜高速鉄道: "みなとみらい線",
+  埼玉新都市交通: "ニューシャトル",
+  舞浜リゾートライン: "ディズニーリゾートライン",
+  名古屋臨海高速鉄道: "あおなみ線",
+  愛知高速交通: "リニモ",
+  大阪港トランスポートシステム: "OTS",
+  北大阪急行電鉄: "北大阪急行",
 };
 
 export function shortOperator(operator: string): string {
@@ -27,6 +37,58 @@ export function shortOperator(operator: string): string {
 /** "4号線丸ノ内線" → "丸ノ内線"。地下鉄の番号接頭辞を落として表示名を作る */
 export function shortLineName(name: string): string {
   return name.replace(/^\d+号線(?=.)/, "");
+}
+
+/**
+ * 俗称・愛称。N02 の正式名称より一般に通っている呼び名を表示に使う。
+ * 正式名称は検索キーに残るので「野田線」で探しても当たる。
+ * 路線の一部区間だけの愛称（京浜東北線、JR京都線など）は誤解を招くので入れない。
+ */
+export interface AliasRule {
+  operator: string; // 運営会社名に含まれる文字列
+  line: string; // 正式路線名（完全一致）
+  alias: string;
+}
+
+export const LINE_ALIASES: AliasRule[] = [
+  { operator: "東武", line: "野田線", alias: "アーバンパークライン" },
+  { operator: "東武", line: "東上本線", alias: "東上線" },
+  { operator: "横浜市", line: "1号線", alias: "ブルーライン" },
+  { operator: "横浜市", line: "3号線", alias: "ブルーライン" },
+  { operator: "横浜市", line: "4号線", alias: "グリーンライン" },
+  { operator: "首都圏新都市鉄道", line: "常磐新線", alias: "つくばエクスプレス" },
+  { operator: "東京臨海高速鉄道", line: "臨海副都心線", alias: "りんかい線" },
+  { operator: "ゆりかもめ", line: "東京臨海新交通臨海線", alias: "ゆりかもめ" },
+  { operator: "横浜高速鉄道", line: "みなとみらい21線", alias: "みなとみらい線" },
+  { operator: "埼玉新都市交通", line: "伊奈線", alias: "ニューシャトル" },
+  { operator: "舞浜リゾートライン", line: "ディズニーリゾートライン", alias: "ディズニーリゾートライン" },
+  { operator: "西武", line: "山口線", alias: "レオライナー" },
+  { operator: "東京都", line: "荒川線", alias: "東京さくらトラム" },
+  { operator: "千葉都市モノレール", line: "1号線", alias: "1号線" },
+  { operator: "西日本旅客鉄道", line: "片町線", alias: "学研都市線" },
+  { operator: "西日本旅客鉄道", line: "桜島線", alias: "JRゆめ咲線" },
+  { operator: "西日本旅客鉄道", line: "東西線", alias: "JR東西線" },
+  { operator: "大阪市高速電気軌道", line: "南港ポートタウン線", alias: "ニュートラム" },
+  { operator: "名古屋臨海高速鉄道", line: "西名古屋港線", alias: "あおなみ線" },
+  { operator: "愛知高速交通", line: "東部丘陵線", alias: "リニモ" },
+  { operator: "神戸新交通", line: "ポートアイランド線", alias: "ポートライナー" },
+  { operator: "神戸新交通", line: "六甲アイランド線", alias: "六甲ライナー" },
+  { operator: "大阪モノレール", line: "大阪モノレール線", alias: "本線" },
+];
+
+export function lineAlias(operator: string, lineName: string): string | undefined {
+  return LINE_ALIASES.find((r) => operator.includes(r.operator) && r.line === lineName)?.alias;
+}
+
+/**
+ * 表示名の組み立て。事業者名を薄く前置きした「東急東横線」形式にするが、
+ * 路線名が事業者名で始まる／同じ場合（相鉄本線、ゆりかもめ）は前置きしない。
+ */
+export function displayName(operator: string, lineName: string): { shortName: string; prefix: string } {
+  const opShort = shortOperator(operator);
+  const shortName = lineAlias(operator, lineName) ?? shortLineName(lineName);
+  const prefix = shortName === opShort || shortName.startsWith(opShort) ? "" : opShort;
+  return { shortName, prefix };
 }
 
 /** N02_001 鉄道区分コード */

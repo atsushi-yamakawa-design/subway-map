@@ -137,7 +137,7 @@ export const COLOR_RULES: ColorRule[] = [
   { operator: "仙台市", line: "南北線", color: "#00A95F" },
   { operator: "仙台市", line: "東西線", color: "#0072BC" },
   { operator: "福岡市", line: "空港線", color: "#ED6D1F" },
-  { operator: "福岡市", line: "箕生線", color: "#0071BB" },
+  { operator: "福岡市", line: "箱崎線", color: "#0071BB" },
   { operator: "福岡市", line: "七隈線", color: "#53B332" },
   // ---- 汎用 ----
   { line: "新幹線", color: "#1F3A93" },

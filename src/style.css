@@ -192,7 +192,7 @@ body { background: var(--page); }
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
 }
-.maplibregl-popup-content { padding: 10px 12px; font: inherit; border-radius: 12px; border: 2px solid var(--ink); box-shadow: 3px 3px 0 var(--ink); }
+.maplibregl-popup-content { padding: 12px 14px; font: inherit; border-radius: 18px; border: 2px solid var(--ink); box-shadow: 3px 3px 0 var(--ink); }
 .maplibregl-popup-anchor-bottom .maplibregl-popup-tip { border-top-color: var(--ink); }
 .maplibregl-popup-anchor-top .maplibregl-popup-tip { border-bottom-color: var(--ink); }
 .maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color: var(--ink); }

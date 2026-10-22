@@ -44,7 +44,9 @@ jobs:
             n02-${{ hashFiles('scripts/download-n02.ts') }}-
 
       - name: Download N02 (国土数値情報 鉄道データ)
-        # data/raw/N02.zip がキャッシュから復元されていれば再利用する
+        # 通常はキャッシュの zip を再利用。年次の定期実行と手動実行では取り直して新年度版を拾う
+        env:
+          N02_FORCE: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && '1' || '' }}
         run: npm run data:download
 
       - name: Build data

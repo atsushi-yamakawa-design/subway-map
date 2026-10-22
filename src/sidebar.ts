@@ -42,7 +42,7 @@ export function createSidebar(data: MapData, state: AppState, handlers: SidebarH
     docs.push({
       kind: "line",
       id: p.id,
-      prefix: p.operatorShort,
+      prefix: p.prefix || undefined,
       title: p.shortName,
       sub: `${p.stationCount}駅`,
       color: p.color,
@@ -95,7 +95,7 @@ export function createSidebar(data: MapData, state: AppState, handlers: SidebarH
     if (f.kind === "line") {
       const line = data.lineById.get(f.id);
       if (line) {
-        chips.appendChild(chip(line.properties.color, line.properties.shortName, () => state.clear(), line.properties.operatorShort));
+        chips.appendChild(chip(line.properties.color, line.properties.shortName, () => state.clear(), line.properties.prefix));
       }
     } else {
       const st = data.stationById.get(f.id);

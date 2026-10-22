@@ -11,7 +11,7 @@ import {
   simplifyLine,
 } from "./geo.js";
 import { fallbackColor, lookupColor } from "./colors.js";
-import { OPERATOR_TYPE, RAIL_TYPE, shortLineName, shortOperator } from "./names.js";
+import { OPERATOR_TYPE, RAIL_TYPE, displayName, shortOperator } from "./names.js";
 
 // ---- 入力（国土数値情報 N02）----
 // GeoJSON 版の属性キーはコード（N02_003 など）だが、年度によって日本語キーのこともあるので両対応。
@@ -48,8 +48,12 @@ const K = {
 // ---- 出力 ----
 export interface LineProps {
   id: string;
+  /** N02 の正式名称 */
   name: string;
+  /** 表示名（俗称があればそれ、番号接頭辞は落とす） */
   shortName: string;
+  /** 表示時に薄く前置きする事業者名。不要なら空 */
+  prefix: string;
   operator: string;
   operatorShort: string;
   operatorType: string;
@@ -192,13 +196,15 @@ export function buildData(railroad: InFC, station: InFC, opts: BuildOptions): Bu
     const lookedUp = lookupColor(acc.operator, acc.name);
     if (lookedUp) colored++;
     const color = lookedUp ?? fallbackColor(parseInt(id.slice(1), 36));
+    const disp = displayName(acc.operator, acc.name);
     lineFeatures.push({
       type: "Feature",
       geometry: { type: "MultiLineString", coordinates: acc.parts },
       properties: {
         id,
         name: acc.name,
-        shortName: shortLineName(acc.name),
+        shortName: disp.shortName,
+        prefix: disp.prefix,
         operator: acc.operator,
         operatorShort: shortOperator(acc.operator),
         operatorType: OPERATOR_TYPE[acc.operatorType] ?? acc.operatorType,
