@@ -1,5 +1,6 @@
 import {
   AttributionControl,
+  GeolocateControl,
   Map as MLMap,
   NavigationControl,
   Popup,
@@ -55,6 +56,17 @@ export function createMap(container: HTMLElement, data: MapData, state: AppState
   });
   // ズーム + コンパス（クリックで北が上に戻る）
   map.addControl(new NavigationControl({ showCompass: true, visualizePitch: true }), "top-right");
+  // 現在地。1 回目のタップで現在地へ移動、もう一度で追従モード
+  map.addControl(
+    new GeolocateControl({
+      positionOptions: { enableHighAccuracy: true },
+      fitBoundsOptions: { maxZoom: 14 },
+      trackUserLocation: true,
+      showAccuracyCircle: true,
+      showUserLocation: true,
+    }),
+    "top-right",
+  );
   map.addControl(
     new AttributionControl({
       compact: true,

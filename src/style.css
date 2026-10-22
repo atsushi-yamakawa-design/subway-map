@@ -121,6 +121,9 @@ body { background: var(--page); }
 
 #map .maplibregl-ctrl-group { border: 2px solid var(--ink); border-radius: 10px; box-shadow: 3px 3px 0 var(--ink); }
 #map .maplibregl-ctrl-group button + button { border-top: 1px solid var(--border); }
+/* 現在地の点を路線色と喧嘩しない青に */
+#map .maplibregl-user-location-dot, #map .maplibregl-user-location-dot::before { background-color: #2f8cff; }
+#map .maplibregl-user-location-accuracy-circle { background-color: rgba(47, 140, 255, 0.15); }
 
 /* MapLibre の左下コントロール（出典 ⓘ とスケール）はリセットボタンの右に横並びで、小さく薄く。
    maplibre-gl.css の方がバンドル順で後に来るので #map で優先度を上げる */
