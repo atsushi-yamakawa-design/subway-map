@@ -194,13 +194,13 @@ export function createMap(container: HTMLElement, data: MapData, state: AppState
   // レイヤー名はスタイル側の都合で変わりうるので、id のパターンと種類で当てる。
   function tintBasemap(): void {
     const rules: Array<{ test: RegExp; types: string[]; prop: string; value: string }> = [
-      { test: /^background$|background/, types: ["background"], prop: "background-color", value: "#fbf3df" },
+      { test: /^background$|background/, types: ["background"], prop: "background-color", value: "#fdf8ec" },
       { test: /water/, types: ["fill"], prop: "fill-color", value: "#bfe2f4" },
       { test: /water/, types: ["line"], prop: "line-color", value: "#a6d3ea" },
       { test: /park|grass|wood|green|forest|cemetery|golf|pitch|garden|nature/, types: ["fill"], prop: "fill-color", value: "#d3eab8" },
       { test: /building/, types: ["fill"], prop: "fill-color", value: "#f2e4c4" },
       { test: /building/, types: ["fill"], prop: "fill-outline-color", value: "#e6d4ad" },
-      { test: /residential|landuse|land_/, types: ["fill"], prop: "fill-color", value: "#f7ecd3" },
+      { test: /residential|landuse|land_/, types: ["fill"], prop: "fill-color", value: "#f9f1de" },
     ];
     for (const layer of map.getStyle().layers) {
       for (const r of rules) {

@@ -1,6 +1,6 @@
 :root {
   --bg: #ffffff;
-  --page: #fbf3df;     /* 地図の地色に合わせたクリーム */
+  --page: #fdf8ec;     /* 地図の地色に合わせた薄いクリーム */
   --fg: #1f1b16;
   --muted: #7a7265;
   --border: #e8dfc9;
@@ -141,21 +141,26 @@ body { background: var(--page); }
 .status.hidden { display: none; }
 .status.error { color: #b91c1c; }
 
-/* ---- 左上のワードマーク（タップでリセット）---- */
+/* ---- 左上のワードマーク（タップでリセット）----
+   囲みは線路記号風: 黒の太枠の中央に白の破線。影なし */
 .brand {
   position: absolute; top: 12px; left: 12px; z-index: 5; margin: 0;
   display: inline-flex; align-items: baseline; gap: 8px;
   padding: 7px 14px; border-radius: 999px;
-  background: #fff; border: 2px solid var(--ink); cursor: pointer;
-  box-shadow: 3px 3px 0 var(--ink);
+  background: #fff; border: 5px solid var(--ink); cursor: pointer;
   font-family: "Dela Gothic One", "Hiragino Sans", "Noto Sans JP", sans-serif;
   font-size: 16px; font-weight: 400; letter-spacing: 0.04em; color: var(--fg);
-  transition: transform 120ms var(--ease), box-shadow 120ms;
+  transition: transform 120ms var(--ease);
 }
-.brand:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--ink); }
-.brand:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+.brand::before {
+  content: ""; position: absolute; inset: -3.5px; border-radius: inherit;
+  border: 2px dashed #fff; pointer-events: none;
+}
+.brand:hover { transform: translateY(-1px); }
+.brand:active { transform: translateY(1px); }
 .brand-name {
-  background: linear-gradient(90deg, #ff5a36 0%, #ff9f1c 25%, #ffd23f 45%, #2ec27e 65%, #2f8cff 85%, #9b5de5 100%);
+  /* 頭を青系にして読みやすく、後ろに向かって暖色へ */
+  background: linear-gradient(90deg, #1d4ed8 0%, #2f8cff 22%, #14a37f 48%, #e69500 74%, #e0393e 100%);
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
 .brand-sub { font-family: inherit; font-size: 10px; color: var(--muted); letter-spacing: 0.02em; }
